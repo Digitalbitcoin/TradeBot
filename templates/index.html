@@ -1,0 +1,2388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+  <title>TradeBot Pro | Automated Crypto Trading</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); border-radius: 8px; }
+    ::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #8b5cf6, #ec4899); border-radius: 8px; }
+
+    .glass {
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .glass-dark {
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .glass-card {
+      background: rgba(255,255,255,0.03);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.06);
+      transition: all 0.25s ease;
+    }
+    .glass-card:hover {
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(139,92,246,0.25);
+      transform: translateY(-2px);
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #a78bfa 0%, #ec4899 50%, #f59e0b 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+      transition: all 0.25s ease;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(139,92,246,0.35); }
+    .btn-secondary {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      transition: all 0.25s ease;
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.10); transform: translateY(-2px); }
+    .btn-success { background: linear-gradient(135deg, #10b981, #059669); transition: all 0.25s ease; }
+    .btn-success:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(16,185,129,0.35); }
+    .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); transition: all 0.25s ease; }
+    .btn-danger:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(239,68,68,0.35); }
+
+    .input-glass {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 12px 16px;
+      color: white;
+      width: 100%;
+      transition: all 0.3s ease;
+    }
+    .input-glass:focus {
+      outline: none;
+      border-color: #8b5cf6;
+      box-shadow: 0 0 30px rgba(139,92,246,0.08);
+      background: rgba(255,255,255,0.07);
+    }
+    .input-glass::placeholder { color: rgba(255,255,255,0.3); }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(12px);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-content {
+      background: rgba(15, 15, 35, 0.98);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 28px;
+      padding: 28px 24px;
+      max-width: 440px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: modalIn 0.3s ease;
+    }
+    @keyframes modalIn {
+      from { transform: scale(0.92) translateY(20px); opacity: 0; }
+      to { transform: scale(1) translateY(0); opacity: 1; }
+    }
+
+    .hamburger-btn {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      background: none;
+      border: none;
+      padding: 6px 4px;
+      cursor: pointer;
+      border-radius: 10px;
+      transition: background 0.2s;
+    }
+    .hamburger-btn:hover { background: rgba(255,255,255,0.05); }
+    .hamburger-btn span {
+      display: block;
+      width: 24px;
+      height: 2.5px;
+      background: white;
+      border-radius: 4px;
+      transition: 0.25s;
+      transform-origin: center;
+    }
+    .hamburger-btn.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+    .hamburger-btn.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+    .hamburger-btn.open span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+
+    .mobile-nav-panel {
+      position: fixed;
+      top: 0;
+      left: -280px;
+      width: 280px;
+      height: 100vh;
+      background: rgba(10, 10, 26, 0.98);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-right: 1px solid rgba(255,255,255,0.06);
+      z-index: 999;
+      padding: 28px 20px 24px;
+      transition: left 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+      display: flex;
+      flex-direction: column;
+      box-shadow: 8px 0 40px rgba(0,0,0,0.6);
+    }
+    .mobile-nav-panel.open { left: 0; }
+
+    .mobile-nav-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 998;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .mobile-nav-overlay.open { opacity: 1; pointer-events: auto; }
+
+    .mobile-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      color: rgba(255,255,255,0.6);
+      font-weight: 500;
+      font-size: 15px;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .mobile-nav-item i { width: 22px; font-size: 18px; color: rgba(255,255,255,0.35); }
+    .mobile-nav-item.active {
+      background: rgba(139,92,246,0.12);
+      color: white;
+    }
+    .mobile-nav-item.active i { color: #a78bfa; }
+    .mobile-nav-item:hover { background: rgba(255,255,255,0.04); color: white; }
+
+    .mobile-nav-divider {
+      height: 1px;
+      background: rgba(255,255,255,0.06);
+      margin: 12px 0;
+    }
+
+    .desktop-nav {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .desktop-nav.visible { display: flex; }
+    .desktop-nav-item {
+      padding: 7px 16px;
+      border-radius: 40px;
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.5);
+      transition: all 0.2s;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+    .desktop-nav-item i { font-size: 14px; }
+    .desktop-nav-item:hover { color: white; background: rgba(255,255,255,0.04); }
+    .desktop-nav-item.active {
+      background: rgba(139,92,246,0.12);
+      color: #a78bfa;
+      border: 1px solid rgba(139,92,246,0.15);
+    }
+
+    .tab-content { display: none !important; }
+    .tab-content.active { display: block !important; }
+    #landingSection { display: block; }
+    #landingSection.hidden { display: none !important; }
+
+    .chart-wrapper { height: 260px; min-height: 260px; max-height: 260px; overflow: hidden; width: 100%; }
+    #priceChartContainer { height: 260px; min-height: 260px; max-height: 260px; overflow: hidden; width: 100%; }
+    #priceChartContainer canvas { display: block; width: 100% !important; height: 100% !important; max-height: 260px; }
+
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .status-dot.online { background: #34d399; box-shadow: 0 0 12px rgba(16,185,129,0.4); }
+    .status-dot.offline { background: #f87171; box-shadow: 0 0 12px rgba(239,68,68,0.4); }
+    .status-dot.paused { background: #fbbf24; box-shadow: 0 0 12px rgba(251,191,36,0.4); }
+
+    .stat-number { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+
+    .toggle {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+    }
+    .toggle.active { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+    .toggle .toggle-knob {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+    }
+    .toggle.active .toggle-knob { left: 22px; }
+
+    .log-line { padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 11px; font-family: 'Courier New', monospace; }
+
+    @media (max-width: 768px) {
+      .desktop-nav.visible { display: none; }
+      .stat-number { font-size: 20px; }
+      .chart-wrapper { height: 200px; min-height: 200px; max-height: 200px; }
+      #priceChartContainer { height: 200px; min-height: 200px; max-height: 200px; }
+      #priceChartContainer canvas { max-height: 200px; }
+      .modal-content { padding: 20px; }
+    }
+    @media (min-width: 769px) {
+      .hamburger-btn { display: none !important; }
+      .mobile-nav-overlay, .mobile-nav-panel { display: none !important; }
+    }
+
+    .avatar-ring { box-shadow: 0 0 0 2px rgba(139,92,246,0.2); }
+    .page-header { text-align: center; margin-bottom: 40px; }
+    .page-header .badge {
+      display: inline-block;
+      padding: 4px 16px;
+      border-radius: 9999px;
+      background: rgba(139,92,246,0.1);
+      border: 1px solid rgba(139,92,246,0.2);
+      color: #a78bfa;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+    .page-header h1 { font-size: 36px; font-weight: 800; color: white; }
+    .page-header p { color: #9ca3af; margin-top: 8px; max-width: 600px; margin-left: auto; margin-right: auto; }
+    @media (max-width: 768px) { .page-header h1 { font-size: 28px; } }
+
+    #pidDisplay { font-size: 11px; color: #6b7280; background: rgba(255,255,255,0.05); padding: 3px 10px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.06); }
+    #pidDisplay .pid-value { color: #34d399; font-weight: 600; }
+
+    .asset-collapsible { cursor: pointer; user-select: none; }
+    .asset-collapsible .toggle-icon { transition: transform 0.3s ease; display: inline-block; }
+    .asset-collapsible.open .toggle-icon { transform: rotate(180deg); }
+    .asset-list { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+    .asset-list.open { max-height: 100px; overflow-y: auto; }
+    .asset-list::-webkit-scrollbar { width: 3px; }
+    .asset-list::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); border-radius: 4px; }
+    .asset-list::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #8b5cf6, #ec4899); border-radius: 4px; }
+
+    .asset-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+    .asset-item:hover { background: rgba(255,255,255,0.05); }
+    .asset-item .asset-symbol { font-weight: 600; color: #e5e7eb; }
+    .asset-item .asset-balance { font-family: monospace; color: #34d399; }
+  </style>
+</head>
+<body class="bg-[#0a0a1a] min-h-screen text-white overflow-x-hidden">
+
+  <!-- ============================================================ -->
+  <!-- MOBILE NAV OVERLAY & PANEL -->
+  <!-- ============================================================ -->
+  <div id="mobileNavOverlay" class="mobile-nav-overlay" onclick="closeMobileNav()"></div>
+  <nav id="mobileNavPanel" class="mobile-nav-panel">
+    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-white/5">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/25">
+        <i class="fas fa-robot text-white text-sm"></i>
+      </div>
+      <div>
+        <span class="font-bold text-lg gradient-text">TradeBot</span>
+        <span class="text-[10px] text-gray-500 block -mt-0.5">Pro</span>
+      </div>
+      <button onclick="closeMobileNav()" class="ml-auto text-gray-400 hover:text-white text-xl">&times;</button>
+    </div>
+
+    <div class="flex-1 overflow-y-auto space-y-1" id="mobileNavItems">
+      <div class="mobile-nav-item" data-tab="dashboard" onclick="switchTabMobile('dashboard')">
+        <i class="fas fa-chart-pie"></i> Dashboard
+      </div>
+      <div class="mobile-nav-item" data-tab="profile" onclick="switchTabMobile('profile')">
+        <i class="fas fa-user-cog"></i> Profile
+      </div>
+      <div class="mobile-nav-item" data-tab="api" onclick="switchTabMobile('api')">
+        <i class="fas fa-key"></i> API Keys
+      </div>
+      <div class="mobile-nav-item" data-tab="settings" onclick="switchTabMobile('settings')">
+        <i class="fas fa-sliders-h"></i> Settings
+      </div>
+      <div class="mobile-nav-divider"></div>
+      <div class="mobile-nav-item" data-tab="pricing" onclick="switchTabMobile('pricing')">
+        <i class="fas fa-tags"></i> Pricing
+      </div>
+      <div class="mobile-nav-item" data-tab="api-docs" onclick="switchTabMobile('api-docs')">
+        <i class="fas fa-code"></i> API Docs
+      </div>
+      <div class="mobile-nav-item" data-tab="support" onclick="switchTabMobile('support')">
+        <i class="fas fa-headset"></i> Support
+      </div>
+      <div class="mobile-nav-item" data-tab="privacy" onclick="switchTabMobile('privacy')">
+        <i class="fas fa-shield-alt"></i> Privacy
+      </div>
+      <div class="mobile-nav-item" data-tab="terms" onclick="switchTabMobile('terms')">
+        <i class="fas fa-file-contract"></i> Terms
+      </div>
+      <div class="mobile-nav-item" data-tab="cookies" onclick="switchTabMobile('cookies')">
+        <i class="fas fa-cookie-bite"></i> Cookies
+      </div>
+    </div>
+
+    <div class="pt-4 border-t border-white/5 mt-2">
+      <div id="mobileUserInfo" class="flex items-center gap-3 px-2 py-2 rounded-xl bg-white/5">
+        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
+          <span id="mobileUserInitial">U</span>
+        </div>
+        <div>
+          <div class="text-sm font-medium" id="mobileUserName">Guest</div>
+          <div class="text-[10px] text-gray-500" id="mobileUserStatus">Not logged in</div>
+        </div>
+        <button onclick="handleLogout()" class="ml-auto text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded-lg bg-red-500/10">
+          <i class="fas fa-sign-out-alt"></i>
+        </button>
+      </div>      
+    </div>
+  </nav>
+
+  <!-- ============================================================ -->
+  <!-- TOP NAVBAR -->
+  <!-- ============================================================ -->
+  <nav class="fixed top-0 left-0 right-0 z-50 glass-dark border-b border-white/5">
+    <div class="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleMobileNav()" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/25">
+            <i class="fas fa-robot text-white text-sm"></i>
+          </div>
+          <div>
+            <span class="font-bold text-lg gradient-text">TradeBot</span>
+            <span class="text-[10px] text-gray-500 block -mt-0.5">Pro</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="desktop-nav" id="desktopNav">
+        <div class="desktop-nav-item active" data-tab="dashboard" onclick="switchTab('dashboard')">
+          <i class="fas fa-chart-pie"></i> Dashboard
+        </div>
+        <div class="desktop-nav-item" data-tab="profile" onclick="switchTab('profile')">
+          <i class="fas fa-user-cog"></i> Profile
+        </div>
+        <div class="desktop-nav-item" data-tab="api" onclick="switchTab('api')">
+          <i class="fas fa-key"></i> API
+        </div>        
+        <div class="desktop-nav-item" data-tab="settings" onclick="switchTab('settings')">
+          <i class="fas fa-sliders-h"></i> Settings
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 md:gap-3">
+        <div class="hidden sm:flex items-center gap-2">
+          <span id="statusDot" class="status-dot offline"></span>
+          <span id="statusText" class="text-xs font-medium text-gray-400">Offline</span>
+        </div>
+        <div id="modeBadge" class="px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/20 text-[10px] font-semibold text-amber-300 flex items-center gap-1">
+          <i class="fas fa-flask text-[9px]"></i> TESTNET
+        </div>
+
+        <div id="authButtons" class="flex items-center gap-1.5">
+          <button onclick="showModal('loginModal')" class="px-3 py-1.5 text-xs font-semibold text-purple-300 hover:text-white transition-colors">
+            <i class="fas fa-sign-in-alt mr-1.5"></i>Login
+          </button>
+          <button onclick="showModal('registerModal')" class="px-3.5 py-1.5 btn-primary text-white text-xs font-semibold rounded-lg">
+            <i class="fas fa-user-plus mr-1.5"></i>Register
+          </button>
+        </div>
+
+        <div id="userInfo" class="hidden flex items-center gap-2 md:gap-3">
+          <div class="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-white/5 transition-colors cursor-pointer" onclick="switchTab('profile')">
+            <div class="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold shadow-lg shadow-purple-500/20 avatar-ring">
+              <span id="userInitial">U</span>
+            </div>
+            <span class="text-sm font-medium hidden sm:block"><span id="userDisplay">User</span></span>
+          </div>
+          <button onclick="handleLogout()" class="px-2.5 py-1 text-xs text-red-400 hover:text-red-300 transition-colors">
+            <i class="fas fa-sign-out-alt"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ============================================================ -->
+  <!-- MAIN CONTENT -->
+  <!-- ============================================================ -->
+  <main class="pt-20 px-4 md:px-6 pb-8 max-w-7xl mx-auto">
+
+    <!-- LANDING SECTION -->
+    <div id="landingSection" class="min-h-screen">
+      <section class="min-h-[90vh] flex items-center relative overflow-hidden">
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+          <div class="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
+          <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-pink-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl"></div>
+        </div>
+        
+        <div class="w-full relative z-10">
+          <div class="text-center max-w-4xl mx-auto mb-12 px-4">
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-semibold mb-6 animate-pulse">
+              <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              </span>
+              <i class="fas fa-shield-alt mr-1.5"></i> Secure • Automated • 24/7
+            </div>
+            <h1 class="text-4xl md:text-7xl font-extrabold leading-tight">
+              Trade Smarter with<br>
+              <span class="gradient-text">AI-Powered Automation</span>
+            </h1>
+            <p class="text-gray-400 text-lg md:text-xl mt-6 max-w-3xl mx-auto leading-relaxed">
+              Execute spike/dump strategies automatically. Buy the dip, sell the spike completely hands-free with real-time market analysis.
+            </p>
+            <div class="flex flex-wrap gap-4 justify-center mt-8">
+              <button onclick="showModal('registerModal')" class="px-8 py-3.5 btn-primary text-white font-semibold rounded-xl text-base shadow-lg shadow-purple-500/20 hover:scale-105 transition-transform duration-300">
+                <i class="fas fa-rocket mr-2"></i> Get Started Free
+              </button>
+              <button onclick="showModal('loginModal')" class="px-8 py-3.5 btn-secondary text-white font-semibold rounded-xl text-base hover:scale-105 transition-transform duration-300">
+                <i class="fas fa-sign-in-alt mr-2"></i> Login
+              </button>
+            </div>
+            
+            <div class="flex flex-wrap justify-center items-center gap-6 md:gap-8 mt-12 text-sm">
+              <div class="flex items-center gap-2 text-gray-400">
+                <i class="fas fa-check-circle text-emerald-400"></i>
+                <span>Trusted by 10,000+ traders</span>
+              </div>
+              <div class="flex items-center gap-2 text-gray-400">
+                <i class="fas fa-check-circle text-emerald-400"></i>
+                <span>$50M+ trading volume</span>
+              </div>
+              <div class="flex items-center gap-2 text-gray-400">
+                <i class="fas fa-check-circle text-emerald-400"></i>
+                <span>99.9% uptime</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto px-4">
+            <div class="glass-card rounded-2xl p-6 text-center group hover:border-purple-500/30 hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-300">
+              <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                <i class="fas fa-bolt text-2xl text-purple-400"></i>
+              </div>
+              <h3 class="font-bold text-white text-lg">Spike & Dump Strategy</h3>
+              <p class="text-gray-400 text-sm mt-2 leading-relaxed">Automatically buy on dips and sell on spikes with tiered levels for maximum profit potential.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-6 text-center group hover:border-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300">
+              <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                <i class="fas fa-shield-alt text-2xl text-emerald-400"></i>
+              </div>
+              <h3 class="font-bold text-white text-lg">Risk Management</h3>
+              <p class="text-gray-400 text-sm mt-2 leading-relaxed">Circuit breakers, daily loss limits, and position sizing controls to protect your capital.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-6 text-center group hover:border-pink-500/30 hover:shadow-xl hover:shadow-pink-500/10 transition-all duration-300">
+              <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-pink-500/20 to-pink-600/20 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                <i class="fas fa-chart-line text-2xl text-pink-400"></i>
+              </div>
+              <h3 class="font-bold text-white text-lg">Real-time Dashboard</h3>
+              <p class="text-gray-400 text-sm mt-2 leading-relaxed">Live price charts, trade history, and performance analytics all in one place.</p>
+            </div>
+          </div>          
+        </div>
+      </section>
+
+      <section class="py-20 px-4 relative">
+        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-purple-500/5 to-transparent pointer-events-none"></div>
+        <div class="max-w-6xl mx-auto relative z-10">
+          <div class="text-center mb-12">
+            <span class="text-purple-400 text-sm font-semibold uppercase tracking-wider">How It Works</span>
+            <h2 class="text-3xl md:text-4xl font-bold text-white mt-2">Start Trading in 3 Simple Steps</h2>
+            <p class="text-gray-400 mt-3 max-w-2xl mx-auto">Get your automated trading bot up and running in minutes</p>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="text-center group">
+              <div class="relative inline-block">
+                <div class="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4 shadow-lg shadow-purple-500/25 group-hover:scale-110 transition-transform duration-300">
+                  1
+                </div>
+                <div class="hidden md:block absolute top-1/2 left-full w-full h-0.5 bg-gradient-to-r from-purple-500/30 to-transparent"></div>
+              </div>
+              <h3 class="font-bold text-white text-lg">Create Account</h3>
+              <p class="text-gray-400 text-sm mt-2 leading-relaxed">Sign up for free and get instant access to our trading platform with no hidden fees.</p>
+            </div>
+            <div class="text-center group">
+              <div class="relative inline-block">
+                <div class="w-20 h-20 rounded-full bg-gradient-to-br from-pink-500 to-pink-600 flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4 shadow-lg shadow-pink-500/25 group-hover:scale-110 transition-transform duration-300">
+                  2
+                </div>
+                <div class="hidden md:block absolute top-1/2 left-full w-full h-0.5 bg-gradient-to-r from-pink-500/30 to-transparent"></div>
+              </div>
+              <h3 class="font-bold text-white text-lg">Connect Exchange</h3>
+              <p class="text-gray-400 text-sm mt-2 leading-relaxed">Securely connect your Binance account with API keys to enable automated trading.</p>
+            </div>
+            <div class="text-center group">
+              <div class="relative inline-block">
+                <div class="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4 shadow-lg shadow-emerald-500/25 group-hover:scale-110 transition-transform duration-300">
+                  3
+                </div>
+              </div>
+              <h3 class="font-bold text-white text-lg">Start Earning</h3>
+              <p class="text-gray-400 text-sm mt-2 leading-relaxed">Activate your bot and watch it automatically execute profitable trades 24/7.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="py-20 px-4 bg-white/5">
+        <div class="max-w-6xl mx-auto">
+          <div class="text-center mb-12">
+            <span class="text-purple-400 text-sm font-semibold uppercase tracking-wider">Powerful Features</span>
+            <h2 class="text-3xl md:text-4xl font-bold text-white mt-2">Everything You Need to Succeed</h2>
+            <p class="text-gray-400 mt-3 max-w-2xl mx-auto">Advanced tools and features designed for both beginners and experienced traders</p>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="glass-card rounded-2xl p-6 hover:border-purple-500/30 transition-all duration-300">
+              <div class="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mb-4">
+                <i class="fas fa-robot text-purple-400 text-xl"></i>
+              </div>
+              <h3 class="font-bold text-white">Automated Trading</h3>
+              <p class="text-gray-400 text-sm mt-2">Fully automated bot executes trades based on your predefined strategy without manual intervention.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-6 hover:border-pink-500/30 transition-all duration-300">
+              <div class="w-12 h-12 rounded-xl bg-pink-500/20 flex items-center justify-center mb-4">
+                <i class="fas fa-layer-group text-pink-400 text-xl"></i>
+              </div>
+              <h3 class="font-bold text-white">Multi-Level Strategy</h3>
+              <p class="text-gray-400 text-sm mt-2">Tiered buying and selling levels with configurable thresholds for optimal entry and exit points.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-6 hover:border-emerald-500/30 transition-all duration-300">
+              <div class="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center mb-4">
+                <i class="fas fa-chart-bar text-emerald-400 text-xl"></i>
+              </div>
+              <h3 class="font-bold text-white">Performance Analytics</h3>
+              <p class="text-gray-400 text-sm mt-2">Track your profitability with detailed charts, win rate analysis, and real-time performance metrics.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-6 hover:border-blue-500/30 transition-all duration-300">
+              <div class="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center mb-4">
+                <i class="fas fa-shield-alt text-blue-400 text-xl"></i>
+              </div>
+              <h3 class="font-bold text-white">Risk Controls</h3>
+              <p class="text-gray-400 text-sm mt-2">Set daily loss limits, position sizes, and automatic circuit breakers to protect your capital.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-6 hover:border-cyan-500/30 transition-all duration-300">
+              <div class="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center mb-4">
+                <i class="fas fa-mobile-alt text-cyan-400 text-xl"></i>
+              </div>
+              <h3 class="font-bold text-white">Mobile Friendly</h3>
+              <p class="text-gray-400 text-sm mt-2">Monitor and control your bot from anywhere with our responsive mobile-optimized interface.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="py-20 px-4 relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-pink-500/5 to-transparent pointer-events-none"></div>
+        <div class="max-w-6xl mx-auto relative z-10">
+          <div class="text-center mb-12">
+            <span class="text-purple-400 text-sm font-semibold uppercase tracking-wider">Our Impact</span>
+            <h2 class="text-3xl md:text-4xl font-bold text-white mt-2">Trusted by Thousands Worldwide</h2>
+            <p class="text-gray-400 mt-3 max-w-2xl mx-auto">Real results from real traders using our automated trading platform</p>
+          </div>
+          
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div class="glass-card rounded-2xl p-6 text-center">
+              <div class="text-4xl font-bold text-purple-400">10K+</div>
+              <div class="text-gray-400 text-sm mt-1">Active Traders</div>
+            </div>
+            <div class="glass-card rounded-2xl p-6 text-center">
+              <div class="text-4xl font-bold text-pink-400">$50M+</div>
+              <div class="text-gray-400 text-sm mt-1">Trading Volume</div>
+            </div>
+            <div class="glass-card rounded-2xl p-6 text-center">
+              <div class="text-4xl font-bold text-emerald-400">99.9%</div>
+              <div class="text-gray-400 text-sm mt-1">Uptime</div>
+            </div>
+            <div class="glass-card rounded-2xl p-6 text-center">
+              <div class="text-4xl font-bold text-amber-400">4.9★</div>
+              <div class="text-gray-400 text-sm mt-1">User Rating</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="py-20 px-4">
+        <div class="max-w-4xl mx-auto text-center">
+          <div class="glass-card rounded-3xl p-8 md:p-12 border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-pink-500/5">
+            <div class="inline-block px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-semibold mb-4">
+              <i class="fas fa-quote-left mr-1.5"></i> Testimonials
+            </div>
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">What Our Users Say</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8 text-left">
+              <div class="glass-card rounded-xl p-6">
+                <div class="flex items-center gap-1 text-amber-400 mb-2">
+                  <i class="fas fa-star"></i>
+                  <i class="fas fa-star"></i>
+                  <i class="fas fa-star"></i>
+                  <i class="fas fa-star"></i>
+                  <i class="fas fa-star"></i>
+                </div>
+                <p class="text-gray-300 text-sm leading-relaxed">"This bot has completely transformed my trading. The automated spike/dump strategy consistently delivers profits while I sleep. Best investment I've made!"</p>
+                <div class="mt-3 flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-sm">JD</div>
+                  <div>
+                    <div class="text-sm font-semibold text-white">John D.</div>
+                    <div class="text-xs text-gray-500">Professional Trader</div>
+                  </div>
+                </div>
+              </div>
+              <div class="glass-card rounded-xl p-6">
+                <div class="flex items-center gap-1 text-amber-400 mb-2">
+                  <i class="fas fa-star"></i>
+                  <i class="fas fa-star"></i>
+                  <i class="fas fa-star"></i>
+                  <i class="fas fa-star"></i>
+                  <i class="fas fa-star-half-alt"></i>
+                </div>
+                <p class="text-gray-300 text-sm leading-relaxed">"I was skeptical at first, but after connecting my API keys and letting the bot run for a month, I've seen consistent 15-20% monthly returns. Absolutely game-changing."</p>
+                <div class="mt-3 flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-white font-bold text-sm">SM</div>
+                  <div>
+                    <div class="text-sm font-semibold text-white">Sarah M.</div>
+                    <div class="text-xs text-gray-500">Crypto Enthusiast</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-10 pt-8 border-t border-white/10">
+              <h3 class="text-2xl font-bold text-white mb-3">Ready to Start Trading?</h3>
+              <p class="text-gray-400 mb-6">Join thousands of successful traders and start earning today</p>
+              <button onclick="showModal('registerModal')" class="px-8 py-3.5 btn-primary text-white font-semibold rounded-xl text-base shadow-lg shadow-purple-500/20 hover:scale-105 transition-transform duration-300">
+                <i class="fas fa-rocket mr-2"></i> Get Started Now - It's Free
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- DASHBOARD TAB -->
+    <!-- ============================================================ -->
+    <div id="tab-dashboard" class="tab-content">
+
+      <div id="apiKeyWarning" class="hidden glass-card rounded-xl p-4 mb-6 border-amber-500/30 bg-amber-500/5 flex items-center justify-between flex-wrap gap-3">
+        <div class="flex items-center gap-3">
+          <i class="fas fa-exclamation-triangle text-amber-400 text-xl"></i>
+          <div>
+            <div class="text-sm font-semibold text-white">API Keys Required</div>
+            <div class="text-xs text-gray-400">Configure your Binance API keys to start trading</div>
+          </div>
+        </div>
+        <button onclick="switchTab('api')" class="px-4 py-2 btn-primary text-white text-xs font-semibold rounded-lg">
+          <i class="fas fa-key mr-1.5"></i> Configure API Keys
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="glass-card rounded-xl p-5">
+          <div class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1 flex items-center gap-1.5">
+            <i class="fas fa-dollar-sign text-emerald-400"></i> Price
+          </div>
+          <div class="stat-number text-white" id="currentPrice">$0.00</div>
+          <div class="text-xs text-gray-500" id="symbolDisplay">BTC/USDT</div>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <div class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1 flex items-center gap-1.5">
+            <i class="fas fa-wallet text-blue-400"></i> Balance
+          </div>
+          <div class="stat-number text-white" id="balance">$0.00</div>
+          <div class="text-xs text-gray-500">Capital: <span id="totalCapital" class="text-purple-400">$0</span></div>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <div class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1 flex items-center gap-1.5">
+            <i class="fas fa-coins text-yellow-400"></i> Total Profit
+          </div>
+          <div class="stat-number" id="totalProfit">$0.00</div>
+          <div class="text-xs text-gray-500">Trades: <span id="totalTrades" class="text-white">0</span></div>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <div class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1 flex items-center gap-1.5">
+            <i class="fas fa-trophy text-purple-400"></i> Win Rate
+          </div>
+          <div class="stat-number text-emerald-400" id="winRate">0%</div>
+          <div class="text-xs text-gray-500">Today: <span id="todayProfit" class="text-white">$0.00</span></div>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-xl p-4 mb-6 flex flex-wrap items-center gap-3">
+        <div class="flex items-center gap-2">
+          <i class="fas fa-coins text-gray-400 text-sm"></i>
+          <select id="coinSelect" class="bg-[#1a1a3e] border border-white/10 rounded-lg text-xs py-1.5 px-2 min-w-[140px] text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-300">
+          </select>
+        </div>
+        <div class="w-px h-6 bg-white/10 hidden sm:block"></div>
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <button id="startBtn" onclick="startBot()" class="px-4 py-1.5 btn-success text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-lg shadow-emerald-500/20">
+            <i class="fas fa-play text-[10px]"></i> START
+          </button>
+          <button id="startLoadingBtn" class="hidden px-4 py-1.5 bg-gray-600 text-white text-xs font-bold rounded-lg flex items-center gap-1.5">
+            <div class="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> STARTING
+          </button>
+          <button id="pauseBtn" onclick="pauseBot()" class="hidden px-4 py-1.5 bg-amber-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-lg shadow-amber-500/20">
+            <i class="fas fa-pause text-[10px]"></i> PAUSE
+          </button>
+          <button id="resumeBtn" onclick="resumeBot()" class="hidden px-4 py-1.5 bg-blue-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-lg shadow-blue-500/20">
+            <i class="fas fa-play text-[10px]"></i> RESUME
+          </button>
+          <button id="stopBtn" onclick="stopBot()" class="hidden px-4 py-1.5 btn-danger text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-lg shadow-red-500/20">
+            <i class="fas fa-stop text-[10px]"></i> STOP
+          </button>
+          <button id="stopLoadingBtn" class="hidden px-4 py-1.5 bg-gray-600 text-white text-xs font-bold rounded-lg flex items-center gap-1.5">
+            <div class="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> STOPPING
+          </button>
+        </div>
+        <div id="pidDisplay" style="display:none;" class="text-xs text-gray-400 ml-2">
+          PID: <span class="pid-value" id="pidValue">-</span>
+        </div>
+        <div class="ml-auto flex items-center gap-2 text-xs text-gray-500">
+          <span id="botStatusLabel">● Stopped</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div class="lg:col-span-2 glass-card rounded-2xl p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i class="fas fa-chart-simple text-cyan-400"></i>
+              <span id="chartTitle">BTC/USDT</span>
+              <span class="text-[10px] text-gray-500 font-normal">24h</span>
+            </h3>           
+          </div>
+          <div class="chart-wrapper">
+            <div id="priceChartContainer">
+              <canvas id="priceChart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="glass-card rounded-2xl p-5">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fas fa-box-open text-purple-400"></i> Position
+          </h3>
+          <div id="positionContent"><div class="text-center text-gray-500 py-6 text-sm">No active position</div></div>
+          <div class="mt-3 pt-3 border-t border-white/10 grid grid-cols-2 gap-2 text-xs">
+            <div><span class="text-gray-400">Buy Levels:</span> <span class="text-white ml-1" id="buyLevels">-</span></div>
+            <div><span class="text-gray-400">Sell Levels:</span> <span class="text-white ml-1" id="sellLevels">-</span></div>
+          </div>
+          <div class="mt-3 pt-3 border-t border-white/10">
+            <div class="asset-collapsible" id="assetToggle" onclick="toggleAssetList()">
+              <div class="flex items-center justify-between text-sm py-2 mb-2 text-gray-400">
+                <span><i class="fas fa-database mr-1"></i> Assets Held</span>
+                <span class="toggle-icon"><i class="fas fa-chevron-down"></i></span>
+              </div>
+            </div>
+            <div class="asset-list" id="assetList">
+              <div id="assetDisplay" class="text-sm text-gray-300 mt-1">No assets held</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="glass-card rounded-2xl p-5">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fas fa-bullseye text-amber-400"></i> Thresholds
+          </h3>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <div class="text-xs text-gray-400 mb-2"><i class="fas fa-arrow-down text-red-400 mr-1"></i> Buy (Dump)</div>
+              <div class="grid grid-cols-4 gap-1.5" id="dumpThresholds"></div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-400 mb-2"><i class="fas fa-arrow-up text-green-400 mr-1"></i> Sell (Spike)</div>
+              <div class="grid grid-cols-4 gap-1.5" id="spikeThresholds"></div>
+            </div>
+          </div>
+        </div>
+        <div class="glass-card rounded-2xl p-5">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fas fa-list-ul text-blue-400"></i> Recent Trades
+            <span class="text-[10px] text-gray-500 font-normal ml-auto" id="tradeCount">0</span>
+          </h3>
+          <div id="tradeList" class="space-y-1 max-h-48 overflow-y-auto pr-1">
+            <div class="text-center text-gray-500 py-4 text-sm">No trades yet</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-2xl p-5">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fas fa-terminal text-green-400"></i> Live Logs
+          <span class="text-[10px] text-gray-500 font-normal ml-auto" id="logCount">0</span>
+        </h3>
+        <div id="logContainer" class="font-mono text-xs max-h-48 overflow-y-auto bg-black/30 rounded-xl p-3">
+          <div class="text-gray-500 py-4 text-center">[SYSTEM] Bot initialized. Waiting for data...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PROFILE TAB -->
+    <!-- ============================================================ -->
+    <div id="tab-profile" class="tab-content max-w-3xl mx-auto">
+      <div class="flex items-center gap-4 mb-6">
+        <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-3xl font-bold shadow-xl shadow-purple-500/20">
+          <span id="profileInitial">U</span>
+        </div>
+        <div>
+          <h2 class="text-2xl font-bold text-white" id="profileUsername">Username</h2>
+          <p class="text-gray-400 text-sm" id="profileEmail">email@example.com</p>
+          <div class="flex items-center gap-3 mt-1">
+            <span class="text-xs bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full">Active</span>
+            <span class="text-xs text-gray-500">Member since <span id="profileJoined">-</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-2xl p-6 mb-6">
+        <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+          <i class="fas fa-user-edit text-purple-400"></i> Update Profile
+        </h3>
+        <form id="profileForm" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="text-gray-400 text-xs block mb-1">Username</label>
+              <input type="text" id="profileUsernameInput" class="input-glass text-sm" disabled />
+            </div>
+            <div>
+              <label class="text-gray-400 text-xs block mb-1">Email</label>
+              <input type="email" id="profileEmailInput" class="input-glass text-sm" placeholder="Update email" />
+            </div>
+          </div>
+          <div>
+            <label class="text-gray-400 text-xs block mb-1">New Password <span class="text-gray-500">(leave blank to keep current)</span></label>
+            <input type="password" id="profilePasswordInput" class="input-glass text-sm" placeholder="Enter new password" />
+          </div>
+          <button type="submit" class="px-6 py-2.5 btn-primary text-white text-sm font-semibold rounded-lg">
+            <i class="fas fa-save mr-2"></i> Update Profile
+          </button>
+        </form>
+        <div id="profileMessage" class="mt-3 text-sm"></div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- API KEYS TAB -->
+    <!-- ============================================================ -->
+    <div id="tab-api" class="tab-content max-w-3xl mx-auto">
+      <div class="flex items-center gap-3 mb-6">
+        <i class="fas fa-key text-3xl text-purple-400"></i>
+        <div>
+          <h2 class="text-2xl font-bold text-white">API Keys</h2>
+          <p class="text-gray-400 text-sm">Connect your Binance account to start trading</p>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-4 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20" id="apiStatusCard">
+          <div class="flex items-center gap-3">
+            <i class="fas fa-check-circle text-emerald-400 text-xl" id="apiStatusIcon"></i>
+            <div>
+              <div class="text-sm font-semibold text-white" id="apiStatusTitle">API Keys Configured</div>
+              <div class="text-xs text-gray-400" id="apiStatusDesc">Your API keys are active and working</div>
+            </div>
+          </div>
+          <span class="text-xs text-emerald-400" id="apiKeyMasked">••••••••</span>
+        </div>
+
+        <form id="apiKeyForm" class="space-y-4">
+          <div>
+            <label class="text-gray-400 text-xs block mb-1">API Key</label>
+            <input type="text" id="apiKeyInput" class="input-glass text-sm" placeholder="Enter your Binance API Key" />
+          </div>
+          <div>
+            <label class="text-gray-400 text-xs block mb-1">API Secret</label>
+            <input type="password" id="apiSecretInput" class="input-glass text-sm" placeholder="Enter your Binance API Secret" />
+          </div>
+          <div class="flex items-center justify-between p-3 rounded-xl bg-white/5">
+            <div>
+              <div class="text-sm font-medium text-white">Testnet Mode</div>
+              <div class="text-xs text-gray-400">Use Binance testnet for paper trading</div>
+            </div>
+            <div class="toggle active" id="testnetToggle" onclick="toggleTestnet()">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+          <div class="flex gap-3 flex-wrap">
+            <button type="submit" class="px-6 py-2.5 btn-primary text-white text-sm font-semibold rounded-lg">
+              <i class="fas fa-save mr-2"></i> Save API Keys
+            </button>
+            <button type="button" onclick="testApiKeys()" class="px-6 py-2.5 btn-secondary text-white text-sm font-semibold rounded-lg">
+              <i class="fas fa-vial mr-2"></i> Test Connection
+            </button>
+          </div>
+        </form>
+        <div id="apiKeyMessage" class="mt-4 text-sm"></div>
+
+        <div class="mt-6 p-4 rounded-xl bg-amber-500/5 border border-amber-500/20">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-shield-alt text-amber-400 mt-0.5"></i>
+            <div>
+              <div class="text-sm font-semibold text-white">Security Note</div>
+              <div class="text-xs text-gray-400">Your API keys are encrypted and stored securely. We never share your keys with third parties. Ensure your API key has only <span class="text-amber-300">Spot Trading</span> permissions enabled.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SETTINGS TAB -->
+    <!-- ============================================================ -->
+    <div id="tab-settings" class="tab-content max-w-3xl mx-auto">
+      <div class="flex items-center gap-3 mb-6">
+        <i class="fas fa-sliders-h text-3xl text-blue-400"></i>
+        <div>
+          <h2 class="text-2xl font-bold text-white">Settings</h2>
+          <p class="text-gray-400 text-sm">Configure your trading preferences</p>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-2xl p-6 mb-6">
+        <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+          <i class="fas fa-coins text-yellow-400"></i> Trading Configuration
+        </h3>
+        <form id="settingsForm" class="space-y-4">
+          <div>
+            <label class="text-gray-400 text-xs block mb-1">Default Trading Symbol</label>
+            <select id="settingsSymbol" class="bg-[#1a1a3e] border border-white/10 rounded-lg text-sm py-1.5 px-4 min-w-[160px] text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-300">
+            </select>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="text-gray-400 text-xs block mb-1">Total Capital ($)</label>
+              <input type="number" id="settingsCapital" class="input-glass text-sm" placeholder="1000" />
+            </div>
+            <div>
+              <label class="text-gray-400 text-xs block mb-1">Base Position ($)</label>
+              <input type="number" id="settingsBasePosition" class="input-glass text-sm" placeholder="100" />
+            </div>
+          </div>
+          <div>
+            <label class="text-gray-400 text-xs block mb-1">Dump Thresholds (%)</label>
+            <input type="text" id="settingsDumpThresholds" class="input-glass text-sm" placeholder="2,4,6,8" />
+          </div>
+          <div>
+            <label class="text-gray-400 text-xs block mb-1">Spike Thresholds (%)</label>
+            <input type="text" id="settingsSpikeThresholds" class="input-glass text-sm" placeholder="2,4,6,8" />
+          </div>
+          <button type="submit" class="px-6 py-2.5 btn-primary text-white text-sm font-semibold rounded-lg">
+            <i class="fas fa-save mr-2"></i> Save Settings
+          </button>
+        </form>
+        <div id="settingsMessage" class="mt-3 text-sm"></div>
+      </div>
+
+      <div class="glass-card rounded-2xl p-6">
+        <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+          <i class="fas fa-trash-alt text-red-400"></i> Account
+        </h3>
+        <button onclick="confirmDeleteAccount()" class="px-6 py-2.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm font-semibold rounded-lg transition-colors border border-red-500/20">
+          <i class="fas fa-user-slash mr-2"></i> Delete Account
+        </button>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PRICING TAB -->
+    <!-- ============================================================ -->
+    <div id="tab-pricing" class="tab-content max-w-6xl mx-auto py-8">
+      <div class="page-header">
+        <div class="badge">Pricing Plans</div>
+        <h1>Choose Your Trading Plan</h1>
+        <p>Select the plan that best fits your trading needs and budget</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="glass-card rounded-2xl p-6 text-center hover:border-purple-500/30 transition-all duration-300">
+          <div class="text-sm font-semibold text-purple-400 uppercase tracking-wider">Starter</div>
+          <div class="text-4xl font-bold text-white mt-2">$0</div>
+          <div class="text-gray-400 text-sm">Free forever</div>
+          <ul class="mt-6 space-y-3 text-left">
+            <li class="flex items-center gap-2 text-sm text-gray-300">
+              <i class="fas fa-check-circle text-emerald-400"></i> Basic spike/dump strategy
+            </li>
+            <li class="flex items-center gap-2 text-sm text-gray-300">
+              <i class="fas fa-check-circle text-emerald-400"></i> 1 active bot
+            </li>
+            <li class="flex items-center gap-2 text-sm text-gray-300">
+              <i class="fas fa-check-circle text-emerald-400"></i> 3 trading pairs
+            </li>
+            <li class="flex items-center gap-2 text-sm text-gray-300">
+              <i class="fas fa-check-circle text-emerald-400"></i> Manual trading only
+            </li>
+          </ul>
+          <button onclick="showModal('registerModal')" class="w-full mt-6 px-4 py-2.5 btn-secondary text-white text-sm font-semibold rounded-lg">
+            Get Started
+          </button>
+        </div>
+
+        <div class="glass-card rounded-2xl p-6 text-center border-2 border-purple-500/30 shadow-lg shadow-purple-500/10 transition-all duration-300 relative">
+          <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[10px] font-bold rounded-full uppercase tracking-wider">
+            Popular
+          </div>
+          <div class="text-sm font-semibold text-purple-400 uppercase tracking-wider">Pro</div>
+          <div class="text-4xl font-bold text-white mt-2">$49</div>
+          <div class="text-gray-400 text-sm">per month</div>
+          <ul class="mt-6 space-y-3 text-left">
+            <li class="flex items-center gap-2 text-sm text-gray-300">
+              <i class="fas fa-check-circle text-emerald-400"></i> Advanced spike/dump strategy
+            </li>
+            <li class="flex items-center gap-2 text-sm text-gray-300">
+              <i class="fas fa-check-circle text-emerald-400"></i> 5 active bots
+            </li>
+            <li class="flex items-center gap-2 text-sm text-gray-300">
+              <i class="fas fa-check-circle text-emerald-400"></i> 10 trading pairs
+            </li>
+            <li class="flex items-center gap-2 text-sm text-gray-300">
+              <i class="fas fa-check-circle text-emerald-400"></i> Automated trading
+            </li>
+            <li class="flex items-center gap-2 text-sm text-gray-300">
+              <i class="fas fa-check-circle text-emerald-400"></i> Priority support
+            </li>
+          </ul>
+          <button onclick="showModal('registerModal')" class="w-full mt-6 px-4 py-2.5 btn-primary text-white text-sm font-semibold rounded-lg">
+            Start Pro Trial
+          </button>
+        </div>
+
+        <div class="glass-card rounded-2xl p-6 text-center hover:border-pink-500/30 transition-all duration-300">
+          <div class="text-sm font-semibold text-pink-400 uppercase tracking-wider">Enterprise</div>
+          <div class="text-4xl font-bold text-white mt-2">Custom</div>
+          <div class="text-gray-400 text-sm">Contact for pricing</div>
+          <ul class="mt-6 space-y-3 text-left">
+            <li class="flex items-center gap-2 text-sm text-gray-300">
+              <i class="fas fa-check-circle text-emerald-400"></i> Custom strategies
+            </li>
+            <li class="flex items-center gap-2 text-sm text-gray-300">
+              <i class="fas fa-check-circle text-emerald-400"></i> Unlimited bots
+            </li>
+            <li class="flex items-center gap-2 text-sm text-gray-300">
+              <i class="fas fa-check-circle text-emerald-400"></i> All trading pairs
+            </li>
+            <li class="flex items-center gap-2 text-sm text-gray-300">
+              <i class="fas fa-check-circle text-emerald-400"></i> Dedicated support
+            </li>
+            <li class="flex items-center gap-2 text-sm text-gray-300">
+              <i class="fas fa-check-circle text-emerald-400"></i> Custom API integration
+            </li>
+            <li class="flex items-center gap-2 text-sm text-gray-300">
+              <i class="fas fa-check-circle text-emerald-400"></i> White-label option
+            </li>
+          </ul>
+          <button onclick="showToast('Contact sales: sales@tradebotpro.com', 'info')" class="w-full mt-6 px-4 py-2.5 btn-secondary text-white text-sm font-semibold rounded-lg">
+            Contact Sales
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- API DOCS TAB -->
+    <!-- ============================================================ -->
+    <div id="tab-api-docs" class="tab-content max-w-4xl mx-auto py-8">
+      <div class="page-header">
+        <div class="badge">Developers</div>
+        <h1>API Documentation</h1>
+        <p>Integrate TradeBot Pro with your own applications</p>
+      </div>
+
+      <div class="space-y-6">
+        <div class="glass-card rounded-2xl p-6">
+          <h3 class="text-lg font-bold text-white mb-3">Authentication</h3>
+          <div class="bg-black/30 rounded-xl p-4">
+            <code class="text-sm text-green-400">POST /api/auth/login</code>
+            <div class="text-gray-400 text-sm mt-2">Authenticate and get your API token</div>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-6">
+          <h3 class="text-lg font-bold text-white mb-3">Bot Control</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-black/30 rounded-xl p-4">
+              <code class="text-sm text-blue-400">POST /api/control/start</code>
+              <div class="text-gray-400 text-sm mt-1">Start trading bot</div>
+            </div>
+            <div class="bg-black/30 rounded-xl p-4">
+              <code class="text-sm text-red-400">POST /api/control/stop</code>
+              <div class="text-gray-400 text-sm mt-1">Stop trading bot</div>
+            </div>
+            <div class="bg-black/30 rounded-xl p-4">
+              <code class="text-sm text-amber-400">POST /api/control/pause</code>
+              <div class="text-gray-400 text-sm mt-1">Pause trading bot</div>
+            </div>
+            <div class="bg-black/30 rounded-xl p-4">
+              <code class="text-sm text-emerald-400">POST /api/control/resume</code>
+              <div class="text-gray-400 text-sm mt-1">Resume trading bot</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-6">
+          <h3 class="text-lg font-bold text-white mb-3">Data Endpoints</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-black/30 rounded-xl p-4">
+              <code class="text-sm text-cyan-400">GET /api/status</code>
+              <div class="text-gray-400 text-sm mt-1">Get bot status and position</div>
+            </div>
+            <div class="bg-black/30 rounded-xl p-4">
+              <code class="text-sm text-cyan-400">GET /api/performance</code>
+              <div class="text-gray-400 text-sm mt-1">Get performance metrics</div>
+            </div>
+            <div class="bg-black/30 rounded-xl p-4">
+              <code class="text-sm text-cyan-400">GET /api/trades</code>
+              <div class="text-gray-400 text-sm mt-1">Get trade history</div>
+            </div>
+            <div class="bg-black/30 rounded-xl p-4">
+              <code class="text-sm text-cyan-400">GET /api/logs</code>
+              <div class="text-gray-400 text-sm mt-1">Get bot logs</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SUPPORT TAB -->
+    <!-- ============================================================ -->
+    <div id="tab-support" class="tab-content max-w-4xl mx-auto py-8">
+      <div class="page-header">
+        <div class="badge">Help Center</div>
+        <h1>How Can We Help?</h1>
+        <p>Get the support you need to succeed</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="glass-card rounded-2xl p-6 text-center hover:border-purple-500/30 transition-all duration-300">
+          <div class="w-14 h-14 rounded-xl bg-purple-500/20 flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-envelope text-purple-400 text-2xl"></i>
+          </div>
+          <h3 class="font-bold text-white">Email Support</h3>
+          <p class="text-gray-400 text-sm mt-2">Response within 24 hours</p>
+          <a href="mailto:support@tradebotpro.com" class="text-purple-400 text-sm hover:text-purple-300 transition-colors">support@tradebotpro.com</a>
+        </div>
+
+        <div class="glass-card rounded-2xl p-6 text-center hover:border-pink-500/30 transition-all duration-300">
+          <div class="w-14 h-14 rounded-xl bg-pink-500/20 flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-comment-dots text-pink-400 text-2xl"></i>
+          </div>
+          <h3 class="font-bold text-white">Live Chat</h3>
+          <p class="text-gray-400 text-sm mt-2">Available 24/7</p>
+          <button onclick="showToast('Chat support coming soon!', 'info')" class="text-pink-400 text-sm hover:text-pink-300 transition-colors">Start Chat</button>
+        </div>
+
+        <div class="glass-card rounded-2xl p-6 text-center hover:border-emerald-500/30 transition-all duration-300">
+          <div class="w-14 h-14 rounded-xl bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-book text-emerald-400 text-2xl"></i>
+          </div>
+          <h3 class="font-bold text-white">Documentation</h3>
+          <p class="text-gray-400 text-sm mt-2">Comprehensive guides</p>
+          <button onclick="switchTab('api-docs')" class="text-emerald-400 text-sm hover:text-emerald-300 transition-colors">Read Docs</button>
+        </div>
+
+        <div class="glass-card rounded-2xl p-6 text-center hover:border-amber-500/30 transition-all duration-300">
+          <div class="w-14 h-14 rounded-xl bg-amber-500/20 flex items-center justify-center mx-auto mb-4">
+            <i class="fab fa-telegram text-amber-400 text-2xl"></i>
+          </div>
+          <h3 class="font-bold text-white">Community</h3>
+          <p class="text-gray-400 text-sm mt-2">Join our community</p>
+          <a href="#" class="text-amber-400 text-sm hover:text-amber-300 transition-colors">@TradeBotPro_Community</a>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-2xl p-6">
+        <h3 class="text-lg font-bold text-white mb-4">Contact Support</h3>
+        <form class="space-y-4" onsubmit="event.preventDefault(); showToast('Message sent successfully! We\'ll respond within 24 hours.', 'success'); this.reset();">
+          <div>
+            <label class="text-gray-400 text-xs block mb-1">Your Name *</label>
+            <input type="text" class="input-glass text-sm" placeholder="Enter your name" required />
+          </div>
+          <div>
+            <label class="text-gray-400 text-xs block mb-1">Email *</label>
+            <input type="email" class="input-glass text-sm" placeholder="Enter your email" required />
+          </div>
+          <div class="relative">
+            <label class="text-gray-400 text-xs block mb-1">Subject *</label>
+            <select class="w-full bg-[#1a1a3e] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-300 appearance-none pr-10 cursor-pointer">
+              <option value="" class="bg-[#1a1a3e] text-white">Select a topic</option>
+              <option value="technical" class="bg-[#1a1a3e] text-white">Technical Issue</option>
+              <option value="billing" class="bg-[#1a1a3e] text-white">Billing Question</option>
+              <option value="feature" class="bg-[#1a1a3e] text-white">Feature Request</option>
+              <option value="other" class="bg-[#1a1a3e] text-white">Other</option>
+            </select>
+            <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
+              <i class="fa-solid fa-chevron-down text-gray-400 mt-4"></i>
+            </div>
+          </div>
+          <div>
+            <label class="text-gray-400 text-xs block mb-1">Message *</label>
+            <textarea rows="4" class="input-glass text-sm" placeholder="Describe your issue in detail" required></textarea>
+          </div>
+          <button type="submit" class="px-6 py-2.5 btn-primary text-white text-sm font-semibold rounded-lg">
+            <i class="fas fa-paper-plane mr-2"></i> Send Message
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PRIVACY, TERMS, COOKIES TABS -->
+    <!-- ============================================================ -->
+    <div id="tab-privacy" class="tab-content max-w-3xl mx-auto py-8">
+      <div class="page-header">
+        <div class="badge">Legal</div>
+        <h1>Privacy Policy</h1>
+        <p>Last updated: March 2026</p>
+      </div>
+      <div class="glass-card rounded-2xl p-6 space-y-6">
+        <div><h3 class="text-lg font-bold text-white mb-2">1. Information We Collect</h3><p class="text-gray-400 text-sm leading-relaxed">We collect information you provide directly, such as your name, email address, and trading preferences. We also collect data about your trading activity and bot performance.</p></div>
+        <div><h3 class="text-lg font-bold text-white mb-2">2. How We Use Your Information</h3><p class="text-gray-400 text-sm leading-relaxed">We use your data to provide and improve our services, process transactions, send updates, and personalize your trading experience.</p></div>
+        <div><h3 class="text-lg font-bold text-white mb-2">3. Data Security</h3><p class="text-gray-400 text-sm leading-relaxed">We implement industry-standard encryption and security measures to protect your data. Your API keys are encrypted and stored securely.</p></div>
+        <div><h3 class="text-lg font-bold text-white mb-2">4. Sharing Your Information</h3><p class="text-gray-400 text-sm leading-relaxed">We do not sell or share your personal data with third parties except as required by law or with your explicit consent.</p></div>
+        <div><h3 class="text-lg font-bold text-white mb-2">5. Your Rights</h3><p class="text-gray-400 text-sm leading-relaxed">You have the right to access, modify, or delete your personal data at any time. Contact us to exercise these rights.</p></div>
+      </div>
+    </div>
+
+    <div id="tab-terms" class="tab-content max-w-3xl mx-auto py-8">
+      <div class="page-header">
+        <div class="badge">Legal</div>
+        <h1>Terms of Service</h1>
+        <p>Last updated: March 2026</p>
+      </div>
+      <div class="glass-card rounded-2xl p-6 space-y-6">
+        <div><h3 class="text-lg font-bold text-white mb-2">1. Acceptance of Terms</h3><p class="text-gray-400 text-sm leading-relaxed">By using TradeBot Pro, you agree to these terms and conditions. If you do not agree, please do not use our services.</p></div>
+        <div><h3 class="text-lg font-bold text-white mb-2">2. Account Registration</h3><p class="text-gray-400 text-sm leading-relaxed">You must create an account to use our services. You are responsible for maintaining the security of your account credentials.</p></div>
+        <div><h3 class="text-lg font-bold text-white mb-2">3. Trading Risks</h3><p class="text-gray-400 text-sm leading-relaxed">Cryptocurrency trading involves substantial risk. We provide tools to assist with trading, but you are solely responsible for your trading decisions and losses.</p></div>
+        <div><h3 class="text-lg font-bold text-white mb-2">4. Fees and Payments</h3><p class="text-gray-400 text-sm leading-relaxed">We charge fees for premium features. All fees are non-refundable unless otherwise specified.</p></div>
+        <div><h3 class="text-lg font-bold text-white mb-2">5. Intellectual Property</h3><p class="text-gray-400 text-sm leading-relaxed">All content, features, and trademarks are our property. You may not copy, modify, or distribute our intellectual property without permission.</p></div>
+        <div><h3 class="text-lg font-bold text-white mb-2">6. Termination</h3><p class="text-gray-400 text-sm leading-relaxed">We reserve the right to terminate or suspend your account for violation of these terms or any illegal activity.</p></div>
+      </div>
+    </div>
+
+    <div id="tab-cookies" class="tab-content max-w-3xl mx-auto py-8">
+      <div class="page-header">
+        <div class="badge">Legal</div>
+        <h1>Cookie Policy</h1>
+        <p>Last updated: March 2026</p>
+      </div>
+      <div class="glass-card rounded-2xl p-6 space-y-6">
+        <div><h3 class="text-lg font-bold text-white mb-2">What Are Cookies</h3><p class="text-gray-400 text-sm leading-relaxed">Cookies are small text files stored on your device that help us enhance your browsing experience and analyze site traffic.</p></div>
+        <div><h3 class="text-lg font-bold text-white mb-2">How We Use Cookies</h3><p class="text-gray-400 text-sm leading-relaxed">We use cookies for authentication, preferences, analytics, and advertising. Essential cookies are necessary for the platform to function.</p></div>
+        <div><h3 class="text-lg font-bold text-white mb-2">Types of Cookies We Use</h3><ul class="list-disc list-inside text-gray-400 text-sm space-y-2"><li><span class="text-white">Essential:</span> Required for basic functionality</li><li><span class="text-white">Analytics:</span> Help us understand how you use our platform</li><li><span class="text-white">Preferences:</span> Remember your settings and preferences</li><li><span class="text-white">Marketing:</span> Used for targeted advertising</li></ul></div>
+        <div><h3 class="text-lg font-bold text-white mb-2">Managing Cookies</h3><p class="text-gray-400 text-sm leading-relaxed">You can control and manage cookies in your browser settings. Disabling cookies may affect your experience on our platform.</p></div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ============================================================ -->
+  <!-- FOOTER -->
+  <!-- ============================================================ -->
+  <footer class="bg-[#0a0a1a] border-t border-white/5 pt-16 pb-8 px-4">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+        <div class="lg:col-span-1">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/25">
+              <i class="fas fa-robot text-white text-sm"></i>
+            </div>
+            <div>
+              <span class="font-bold text-lg gradient-text">TradeBot</span>
+              <span class="text-[10px] text-gray-500 block -mt-0.5">Pro</span>
+            </div>
+          </div>
+          <p class="text-gray-400 text-sm leading-relaxed mb-4">Automated cryptocurrency trading platform using AI-powered spike/dump strategies. Trade smarter, not harder.</p>
+          <div class="flex items-center gap-3">
+            <a href="#" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-purple-500/20 flex items-center justify-center text-gray-400 hover:text-purple-400 transition-all duration-300"><i class="fab fa-twitter"></i></a>
+            <a href="#" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-purple-500/20 flex items-center justify-center text-gray-400 hover:text-purple-400 transition-all duration-300"><i class="fab fa-telegram"></i></a>
+            <a href="#" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-purple-500/20 flex items-center justify-center text-gray-400 hover:text-purple-400 transition-all duration-300"><i class="fab fa-discord"></i></a>
+            <a href="#" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-purple-500/20 flex items-center justify-center text-gray-400 hover:text-purple-400 transition-all duration-300"><i class="fab fa-youtube"></i></a>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-white font-semibold text-sm mb-4">Quick Links</h3>
+          <ul class="space-y-2.5">
+            <li><a href="#" onclick="switchTab('pricing'); return false;" class="text-gray-400 hover:text-purple-400 text-sm transition-colors duration-300">Pricing</a></li>
+            <li><a href="#" onclick="switchTab('api-docs'); return false;" class="text-gray-400 hover:text-purple-400 text-sm transition-colors duration-300">API Documentation</a></li>
+            <li><a href="#" onclick="switchTab('support'); return false;" class="text-gray-400 hover:text-purple-400 text-sm transition-colors duration-300">Support</a></li>
+          </ul>
+        </div>
+        
+        <div>
+          <h3 class="text-white font-semibold text-sm mb-4">Stay Updated</h3>
+          <p class="text-gray-400 text-sm mb-3">Subscribe to get the latest updates and trading tips.</p>
+          <form class="flex flex-col gap-2" onsubmit="event.preventDefault(); showToast('Subscribed successfully!', 'success');">
+            <input type="email" placeholder="Enter your email" class="input-glass text-sm" required />
+            <button type="submit" class="px-4 py-2.5 btn-primary text-white text-xs font-semibold rounded-lg w-full">
+              <i class="fas fa-paper-plane mr-2"></i> Subscribe
+            </button>
+          </form>
+          <div class="mt-4 flex items-center gap-2 text-xs text-gray-500">
+            <i class="fas fa-shield-alt text-emerald-400"></i>
+            <span>We respect your privacy. No spam.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="border-t border-white/5 pt-6">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div class="text-xs text-gray-500">&copy; 2026 TradeBot Pro. All rights reserved.</div>
+          <div class="flex items-center gap-4 text-xs">
+            <a href="#" onclick="switchTab('privacy'); return false;" class="text-gray-500 hover:text-purple-400 transition-colors duration-300">Privacy Policy</a>
+            <span class="text-gray-600">|</span>
+            <a href="#" onclick="switchTab('terms'); return false;" class="text-gray-500 hover:text-purple-400 transition-colors duration-300">Terms of Service</a>
+            <span class="text-gray-600">|</span>
+            <a href="#" onclick="switchTab('cookies'); return false;" class="text-gray-500 hover:text-purple-400 transition-colors duration-300">Cookie Policy</a>
+          </div>
+          <div class="flex items-center gap-2 text-xs text-gray-500">
+            <span class="relative flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+            </span>
+            <span>All systems operational</span>
+          </div>
+        </div>
+        <div class="text-center text-[10px] text-gray-600 mt-4">
+          <i class="fas fa-exclamation-triangle text-amber-500 mr-1"></i>
+          Disclaimer: Cryptocurrency trading involves substantial risk. Trade at your own risk.
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============================================================ -->
+  <!-- MODALS -->
+  <!-- ============================================================ -->
+
+  <div id="registerModal" class="modal-overlay" onclick="if(event.target===this)hideModal('registerModal')">
+    <div class="modal-content">
+      <div class="flex justify-between items-center mb-5">
+        <h2 class="text-xl font-bold text-white"><i class="fas fa-user-plus text-purple-400 mr-2"></i>Create Account</h2>
+        <button onclick="hideModal('registerModal')" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+      </div>
+      <form id="registerForm" class="space-y-3">
+        <div>
+          <label class="text-gray-400 text-xs block mb-1">Username *</label>
+          <input type="text" id="regUsername" class="input-glass text-sm" placeholder="Choose a username" required />
+        </div>
+        <div>
+          <label class="text-gray-400 text-xs block mb-1">Password *</label>
+          <input type="password" id="regPassword" class="input-glass text-sm" placeholder="Create a password" required />
+        </div>
+        <div>
+          <label class="text-gray-400 text-xs block mb-1">Email <span class="text-gray-500">(optional)</span></label>
+          <input type="email" id="regEmail" class="input-glass text-sm" placeholder="Enter your email" />
+        </div>
+        <button type="submit" class="w-full py-2.5 btn-primary text-white font-semibold rounded-xl text-sm">
+          <i class="fas fa-user-plus mr-2"></i> Create Account
+        </button>
+        <p class="text-center text-gray-400 text-xs mt-2">
+          Already have an account? <button type="button" onclick="switchModal('registerModal','loginModal')" class="text-purple-400 hover:text-purple-300">Login</button>
+        </p>
+      </form>
+      <div id="registerMessage" class="mt-3 text-center text-sm"></div>
+    </div>
+  </div>
+
+  <div id="loginModal" class="modal-overlay" onclick="if(event.target===this)hideModal('loginModal')">
+    <div class="modal-content">
+      <div class="flex justify-between items-center mb-5">
+        <h2 class="text-xl font-bold text-white"><i class="fas fa-sign-in-alt text-emerald-400 mr-2"></i>Welcome Back</h2>
+        <button onclick="hideModal('loginModal')" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+      </div>
+      <form id="loginForm" class="space-y-3">
+        <div>
+          <label class="text-gray-400 text-xs block mb-1">Username</label>
+          <input type="text" id="loginUsername" class="input-glass text-sm" placeholder="Enter your username" required />
+        </div>
+        <div>
+          <label class="text-gray-400 text-xs block mb-1">Password</label>
+          <input type="password" id="loginPassword" class="input-glass text-sm" placeholder="Enter your password" required />
+        </div>
+        <button type="submit" class="w-full py-2.5 btn-success text-white font-semibold rounded-xl text-sm">
+          <i class="fas fa-sign-in-alt mr-2"></i> Login
+        </button>
+        <p class="text-center text-gray-400 text-xs mt-2">
+          Don't have an account? <button type="button" onclick="switchModal('loginModal','registerModal')" class="text-purple-400 hover:text-purple-300">Register</button>
+        </p>
+      </form>
+      <div id="loginMessage" class="mt-3 text-center text-sm"></div>
+    </div>
+  </div>
+
+  <!-- Delete Account Confirmation Modal -->
+  <div id="deleteAccountModal" class="modal-overlay" onclick="if(event.target===this)hideModal('deleteAccountModal')">
+    <div class="modal-content">
+      <div class="flex justify-between items-center mb-5">
+        <h2 class="text-xl font-bold text-white"><i class="fas fa-exclamation-triangle text-red-400 mr-2"></i>Delete Account</h2>
+        <button onclick="hideModal('deleteAccountModal')" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+      </div>
+      <div class="space-y-4 text-sm">
+        <p class="text-gray-300">⚠️ <span class="text-red-400 font-bold">Warning:</span> This action is <span class="text-red-400 font-bold">permanent</span> and cannot be undone.</p>
+        <div class="glass-card rounded-xl p-4 bg-red-500/5 border border-red-500/20">
+          <p class="text-gray-400">You are about to permanently delete your account. This will:</p>
+          <ul class="list-disc list-inside text-gray-400 mt-2 space-y-1">
+            <li>Remove all your personal data</li>
+            <li>Delete all trading history and settings</li>
+            <li>Revoke all API keys</li>
+          </ul>
+        </div>
+        <div>
+          <label class="text-gray-400 text-xs block mb-1">Please type <span class="text-red-400 font-bold">"DELETE"</span> to confirm:</label>
+          <input type="text" id="deleteConfirmInput" class="input-glass text-sm" placeholder="Type DELETE here" />
+        </div>
+        <div class="flex gap-3 mt-4">
+          <button onclick="hideModal('deleteAccountModal')" class="flex-1 py-2.5 btn-secondary text-white text-sm font-semibold rounded-lg">Cancel</button>
+          <button onclick="deleteAccount()" class="flex-1 py-2.5 btn-danger text-white text-sm font-semibold rounded-lg">
+            <i class="fas fa-trash-alt mr-2"></i> Permanently Delete
+          </button>
+        </div>
+        <div id="deleteMessage" class="text-center text-sm"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toastContainer" class="fixed bottom-4 right-4 z-50 space-y-2 max-w-sm w-full"></div>
+
+  <script>
+    // ============================================================
+    // GLOBALS
+    // ============================================================
+    let currentUser = null, isLoggedIn = false, currentSymbol = 'BTCUSDT', priceHistory = [];
+    let availableCoins = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT', 'ADAUSDT', 'DOGEUSDT'];
+    const COIN_NAMES = { BTCUSDT:'Bitcoin', ETHUSDT:'Ethereum', BNBUSDT:'BNB', SOLUSDT:'Solana', XRPUSDT:'XRP', ADAUSDT:'Cardano', DOGEUSDT:'Dogecoin' };
+    
+    function getDisplaySymbol(s) { return s.replace('USDT','/USDT'); }
+
+    // ============================================================
+    // TOAST
+    // ============================================================
+    function showToast(message, type='info') {
+      const container = document.getElementById('toastContainer');
+      const colors = { success:'bg-emerald-500/90', error:'bg-red-500/90', info:'bg-blue-500/90', warning:'bg-amber-500/90' };
+      const icons = { success:'fa-check-circle', error:'fa-times-circle', info:'fa-info-circle', warning:'fa-exclamation-triangle' };
+      const el = document.createElement('div');
+      el.className = `glass-dark rounded-xl px-4 py-3 ${colors[type]||colors.info} text-white text-sm flex items-center gap-3 transform transition-all duration-500 translate-x-full shadow-2xl border border-white/10`;
+      el.innerHTML = `<i class="fas ${icons[type]||icons.info} text-lg"></i> <span>${message}</span>`;
+      container.appendChild(el);
+      setTimeout(() => el.classList.remove('translate-x-full'), 50);
+      setTimeout(() => { el.classList.add('translate-x-full'); setTimeout(() => el.remove(), 500); }, 3500);
+    }
+
+    // ============================================================
+    // MODAL
+    // ============================================================
+    function showModal(id) { document.getElementById(id).classList.add('active'); }
+    function hideModal(id) { document.getElementById(id).classList.remove('active'); }
+    function switchModal(from, to) { hideModal(from); setTimeout(() => showModal(to), 200); }
+
+    // ============================================================
+    // MOBILE NAV
+    // ============================================================
+    function toggleMobileNav() {
+      document.getElementById('mobileNavPanel').classList.toggle('open');
+      document.getElementById('mobileNavOverlay').classList.toggle('open');
+      document.getElementById('hamburgerBtn').classList.toggle('open');
+    }
+    function closeMobileNav() {
+      document.getElementById('mobileNavPanel').classList.remove('open');
+      document.getElementById('mobileNavOverlay').classList.remove('open');
+      document.getElementById('hamburgerBtn').classList.remove('open');
+    }
+    function switchTabMobile(tab) { closeMobileNav(); switchTab(tab); }
+
+    // ============================================================
+    // TAB SWITCHING
+    // ============================================================
+    function switchTab(tab) {
+      document.querySelectorAll('.desktop-nav-item').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll(`.desktop-nav-item[data-tab="${tab}"]`).forEach(el => el.classList.add('active'));
+      
+      document.querySelectorAll('.mobile-nav-item').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll(`.mobile-nav-item[data-tab="${tab}"]`).forEach(el => el.classList.add('active'));
+
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      const target = document.getElementById(`tab-${tab}`);
+      if (target) target.classList.add('active');
+      
+      document.getElementById('landingSection').classList.add('hidden');
+      
+      if (tab === 'dashboard') fetchAll();
+      if (tab === 'profile') loadProfile();
+      if (tab === 'api') loadApiKeys();
+      if (tab === 'settings') loadSettings();
+    }
+
+    // ============================================================
+    // CHART
+    // ============================================================
+    let priceChart = null;
+    let updateInterval = null;
+    let isStarting = false;
+    let isStopping = false;
+    const MAX_DATA_POINTS = 200;
+
+    function initChart() {
+      const ctx = document.getElementById('priceChart');
+      if (!ctx) return;
+      if (priceChart) { priceChart.destroy(); priceChart = null; }
+      
+      priceChart = new Chart(ctx, {
+        type: 'line',
+        data: { datasets: [{ label: getDisplaySymbol(currentSymbol), data: [], borderColor: '#f3ba2f', backgroundColor: 'rgba(243,186,47,0.1)', borderWidth: 2, fill: true, tension: 0.1, pointRadius: 0, pointHoverRadius: 6 }] },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 500 },
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => ctx.raw && ctx.raw.y !== undefined ? `$${ctx.raw.y.toFixed(2)}` : '' } } },
+          scales: {
+            x: { type: 'time', time: { unit: 'hour', displayFormats: { hour: 'HH:mm', minute: 'HH:mm' }, tooltipFormat: 'HH:mm:ss' }, ticks: { color: 'rgba(255,255,255,0.4)', maxTicksLimit: 10, autoSkip: true }, grid: { color: 'rgba(255,255,255,0.05)', drawTicks: false } },
+            y: { ticks: { color: 'rgba(255,255,255,0.4)', callback: (v) => `$${v.toFixed(0)}`, maxTicksLimit: 8 }, grid: { color: 'rgba(255,255,255,0.05)' } }
+          }
+        }
+      });
+    }
+
+    function updateChart(prices) {
+      if (!priceChart) return;
+      if (!prices || !prices.length) return;
+      try {
+        const sorted = [...prices].sort((a, b) => new Date(a.time) - new Date(b.time));
+        const limited = sorted.slice(-MAX_DATA_POINTS);
+        const chartData = limited.map(p => ({ x: new Date(p.time), y: parseFloat(p.price) }));
+        priceChart.data.datasets[0].data = chartData;
+        priceChart.update('none');
+      } catch (e) { console.error(e); }
+    }
+
+    // ============================================================
+    // UI HELPERS
+    // ============================================================
+    function updateButtons(running, paused, starting) {
+      const els = { start:'startBtn', startLoading:'startLoadingBtn', pause:'pauseBtn', resume:'resumeBtn', stop:'stopBtn', stopLoading:'stopLoadingBtn' };
+      Object.values(els).forEach(id => document.getElementById(id).classList.add('hidden'));
+      if (starting) document.getElementById(els.startLoading).classList.remove('hidden');
+      else if (isStopping) document.getElementById(els.stopLoading).classList.remove('hidden');
+      else if (!running) document.getElementById(els.start).classList.remove('hidden');
+      else { document.getElementById(els.stop).classList.remove('hidden'); if (paused) document.getElementById(els.resume).classList.remove('hidden'); else document.getElementById(els.pause).classList.remove('hidden'); }
+      
+      const dot = document.getElementById('statusDot'), label = document.getElementById('botStatusLabel');
+      if (starting) { dot.className='status-dot paused'; label.textContent='● Starting...'; }
+      else if (isStopping) { dot.className='status-dot offline'; label.textContent='● Stopping...'; }
+      else if (!running) { dot.className='status-dot offline'; label.textContent='● Stopped'; }
+      else { dot.className = paused ? 'status-dot paused' : 'status-dot online'; label.textContent = paused ? '● Paused' : '● Running'; }
+      document.getElementById('statusText').textContent = starting?'Starting...':isStopping?'Stopping...':!running?'Offline':paused?'Paused':'Online';
+    }
+
+    function updatePIDDisplay(pid) {
+      const container = document.getElementById('pidDisplay');
+      const value = document.getElementById('pidValue');
+      if (pid) { value.textContent = pid; container.style.display = 'inline-block'; } 
+      else { container.style.display = 'none'; }
+    }
+
+    function toggleAssetList() {
+      const list = document.getElementById('assetList');
+      const toggle = document.getElementById('assetToggle');
+      list.classList.toggle('open');
+      toggle.classList.toggle('open');
+    }
+
+    function updateAssetDisplay(assets) {
+      const container = document.getElementById('assetDisplay');
+      if (!assets || assets.length === 0) {
+        container.innerHTML = '<div class="text-gray-500 text-sm py-2">No assets held</div>';
+        return;
+      }
+      const nonUsdtAssets = assets.filter(a => a.asset !== 'USDT' && a.total > 0);
+      if (nonUsdtAssets.length === 0) {
+        container.innerHTML = '<div class="text-gray-500 text-sm py-2">No crypto assets held</div>';
+        return;
+      }
+      let html = '';
+      nonUsdtAssets.forEach(a => {
+        html += `<div class="asset-item">
+          <span class="asset-symbol">${a.asset}</span>
+          <span class="asset-balance">${a.total.toFixed(8)}</span>
+        </div>`;
+      });
+      container.innerHTML = html;
+      
+      const list = document.getElementById('assetList');
+      const toggle = document.getElementById('assetToggle');
+      if (nonUsdtAssets.length > 0) {
+        list.classList.add('open');
+        toggle.classList.add('open');
+      }
+    }
+
+    // ============================================================
+    // POPULATE COIN SELECTS
+    // ============================================================
+    async function populateCoinSelects() {
+        try {
+            let resp = await fetch('/api/available-coins');
+            let data = await resp.json();
+            
+            if (data.success && data.coins && data.coins.length) {
+                availableCoins = data.coins;
+            } else {
+                // Fallback: try status endpoint
+                resp = await fetch('/api/status');
+                data = await resp.json();
+                if (data.available_coins && data.available_coins.length) {
+                    availableCoins = data.available_coins;
+                }
+            }
+        } catch(e) {
+            console.error('Error fetching coins:', e);
+        }
+        
+        updateCoinSelects();
+    }
+
+    function updateCoinSelects() {
+        const select = document.getElementById('coinSelect');
+        const settingsSelect = document.getElementById('settingsSymbol');
+        
+        if (select) {
+            select.innerHTML = availableCoins.map(c => 
+                `<option value="${c}" ${c === currentSymbol ? 'selected' : ''}>${getDisplaySymbol(c)}</option>`
+            ).join('');
+        }
+        
+        if (settingsSelect) {
+            settingsSelect.innerHTML = availableCoins.map(c => 
+                `<option value="${c}" ${c === currentSymbol ? 'selected' : ''}>${getDisplaySymbol(c)}</option>`
+            ).join('');
+        }
+    }
+
+    // ============================================================
+    // UPDATE USER UI
+    // ============================================================
+    function updateUserUI(user) {
+      if (user) {
+        currentUser = user; 
+        isLoggedIn = true;
+        
+        document.getElementById('userDisplay').textContent = user.username;
+        document.getElementById('userInitial').textContent = user.username[0].toUpperCase();
+        document.getElementById('mobileUserInitial').textContent = user.username[0].toUpperCase();
+        document.getElementById('mobileUserName').textContent = user.username;
+        document.getElementById('mobileUserStatus').textContent = 'Logged in';
+        document.getElementById('profileInitial').textContent = user.username[0].toUpperCase();
+        document.getElementById('profileUsername').textContent = user.username;
+        
+        const emailDisplay = document.getElementById('profileEmail');
+        const emailInput = document.getElementById('profileEmailInput');
+        
+        if (user.email && user.email.trim() !== '' && user.email !== 'undefined') {
+          emailDisplay.textContent = user.email;
+          emailDisplay.style.color = '#d1d5db';
+          emailInput.value = user.email;
+        } else {
+          emailDisplay.textContent = 'No email set';
+          emailDisplay.style.color = '#9ca3af';
+          emailInput.value = '';
+        }
+        
+        document.getElementById('profileJoined').textContent = user.registration_date ? new Date(user.registration_date).toLocaleDateString() : '-';
+        document.getElementById('profileUsernameInput').value = user.username;
+        
+        document.getElementById('authButtons').classList.add('hidden');
+        document.getElementById('userInfo').classList.remove('hidden');
+        document.getElementById('desktopNav').classList.add('visible');
+        document.querySelectorAll('.mobile-nav-item').forEach(el => el.style.display = 'flex');
+        document.getElementById('landingSection').classList.add('hidden');
+        document.getElementById('tab-dashboard').classList.add('active');
+        
+        if (user.has_api_keys) {
+          document.getElementById('apiKeyWarning').classList.add('hidden');
+        } else {
+          document.getElementById('apiKeyWarning').classList.remove('hidden');
+        }
+        
+        loadSettings();
+        // Populate coins after login
+        populateCoinSelects();
+      } else {
+        currentUser = null; 
+        isLoggedIn = false;
+        document.getElementById('authButtons').classList.remove('hidden');
+        document.getElementById('userInfo').classList.add('hidden');
+        document.getElementById('desktopNav').classList.remove('visible');
+        
+        document.querySelectorAll('.mobile-nav-item').forEach(el => {
+          const tab = el.getAttribute('data-tab');
+          if (['pricing', 'api-docs', 'support', 'privacy', 'terms', 'cookies'].includes(tab)) {
+            el.style.display = 'flex';
+          } else {
+            el.style.display = 'none';
+          }
+        });
+        
+        document.getElementById('landingSection').classList.remove('hidden');
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        closeMobileNav();
+      }
+    }
+
+    // ============================================================
+    // AUTH
+    // ============================================================
+    async function checkAuth() {
+      try { 
+        const resp = await fetch('/api/auth/check'); 
+        const data = await resp.json(); 
+        if (data.logged_in && data.username) { 
+          const uResp = await fetch('/api/user/profile');
+          const uData = await uResp.json();
+          if (uData.success) {
+            const userData = {
+              username: data.username,
+              email: uData.user?.email || '',
+              registration_date: uData.user?.registration_date || '',
+              has_api_keys: uData.user?.has_api_keys || false,
+              settings: uData.user?.settings || {}
+            };
+            updateUserUI(userData);
+          } else {
+            updateUserUI({ 
+              username: data.username, 
+              email: '', 
+              registration_date: '',
+              has_api_keys: false 
+            });
+          }
+        } else {
+          updateUserUI(null);
+        }
+      } catch(e) { 
+        console.error('Auth check error:', e);
+        updateUserUI(null);
+      }
+    }
+
+    document.getElementById('registerForm').onsubmit = async function(e) {
+      e.preventDefault(); 
+      const msg = document.getElementById('registerMessage'); 
+      msg.innerHTML = '<div class="w-5 h-5 border-2 border-purple-400/30 border-t-purple-400 rounded-full animate-spin mx-auto"></div>';
+      try { 
+        const resp = await fetch('/api/auth/register', { 
+          method:'POST', 
+          headers:{'Content-Type':'application/json'}, 
+          body: JSON.stringify({ 
+            username: document.getElementById('regUsername').value.trim(), 
+            password: document.getElementById('regPassword').value, 
+            email: document.getElementById('regEmail').value.trim()
+          }) 
+        }); 
+        const data = await resp.json(); 
+        if (data.success) { 
+          msg.innerHTML = '<div class="text-emerald-400">✅ '+data.message+'</div>'; 
+          showToast('Account created! Login.', 'success'); 
+          setTimeout(() => { hideModal('registerModal'); showModal('loginModal'); }, 1000); 
+        } else msg.innerHTML = '<div class="text-red-400">❌ '+data.message+'</div>'; 
+      } catch(e) { 
+        msg.innerHTML = '<div class="text-red-400">❌ Error</div>'; 
+      }
+    };
+
+    document.getElementById('loginForm').onsubmit = async function(e) {
+      e.preventDefault(); 
+      const msg = document.getElementById('loginMessage'); 
+      msg.innerHTML = '<div class="w-5 h-5 border-2 border-emerald-400/30 border-t-emerald-400 rounded-full animate-spin mx-auto"></div>';
+      try { 
+        const resp = await fetch('/api/auth/login', { 
+          method:'POST', 
+          headers:{'Content-Type':'application/json'}, 
+          body: JSON.stringify({ 
+            username: document.getElementById('loginUsername').value.trim(), 
+            password: document.getElementById('loginPassword').value 
+          }) 
+        }); 
+        const data = await resp.json(); 
+        if (data.success) { 
+          msg.innerHTML = '<div class="text-emerald-400">✅ '+data.message+'</div>'; 
+          updateUserUI(data.user); 
+          showToast('Welcome back!', 'success'); 
+          setTimeout(() => { 
+            hideModal('loginModal'); 
+            fetchAll(); 
+          }, 400); 
+        } else msg.innerHTML = '<div class="text-red-400">❌ '+data.message+'</div>'; 
+      } catch(e) { 
+        msg.innerHTML = '<div class="text-red-400">❌ Error</div>'; 
+      }
+    };
+
+    async function handleLogout() { 
+      try { 
+        await fetch('/api/auth/logout', { method:'POST' }); 
+        updateUserUI(null); 
+        showToast('Logged out', 'info'); 
+      } catch(e) {
+        console.error('Logout error:', e);
+      }
+    }
+
+    // ============================================================
+    // API KEYS
+    // ============================================================
+    async function loadApiKeys() {
+      try { 
+        const resp = await fetch('/api/user/api-keys'); 
+        const data = await resp.json(); 
+        if (data.success && data.has_api_key) { 
+          document.getElementById('apiStatusCard').className='flex items-center justify-between mb-4 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20'; 
+          document.getElementById('apiStatusIcon').className='fas fa-check-circle text-emerald-400 text-xl'; 
+          document.getElementById('apiStatusTitle').textContent='API Keys Configured'; 
+          document.getElementById('apiStatusDesc').textContent='Active'; 
+          document.getElementById('apiKeyMasked').textContent=data.api_key_masked||'••••••••'; 
+        } else { 
+          document.getElementById('apiStatusCard').className='flex items-center justify-between mb-4 p-3 rounded-xl bg-amber-500/5 border border-amber-500/20'; 
+          document.getElementById('apiStatusIcon').className='fas fa-exclamation-triangle text-amber-400 text-xl'; 
+          document.getElementById('apiStatusTitle').textContent='Not Configured'; 
+          document.getElementById('apiStatusDesc').textContent='Add your Binance keys'; 
+          document.getElementById('apiKeyMasked').textContent='Not set'; 
+        } 
+      } catch(e) {}
+    }
+
+    document.getElementById('apiKeyForm').onsubmit = async function(e) {
+      e.preventDefault(); 
+      const msg = document.getElementById('apiKeyMessage'); 
+      const apiKey = document.getElementById('apiKeyInput').value.trim(); 
+      const apiSecret = document.getElementById('apiSecretInput').value.trim(); 
+      const useTestnet = document.getElementById('testnetToggle').classList.contains('active'); 
+      if (!apiKey || !apiSecret) { 
+        msg.innerHTML = '<div class="text-amber-400">⚠️ Fill both fields</div>'; 
+        return; 
+      } 
+      msg.innerHTML = '<div class="w-5 h-5 border-2 border-purple-400/30 border-t-purple-400 rounded-full animate-spin mx-auto"></div>'; 
+      try { 
+        const resp = await fetch('/api/user/api-keys', { 
+          method:'POST', 
+          headers:{'Content-Type':'application/json'}, 
+          body: JSON.stringify({ api_key: apiKey, api_secret: apiSecret, testnet: useTestnet }) 
+        }); 
+        const data = await resp.json(); 
+        if (data.success) { 
+          msg.innerHTML = '<div class="text-emerald-400">✅ '+data.message+'</div>'; 
+          showToast('API keys saved!', 'success'); 
+          document.getElementById('apiKeyWarning').classList.add('hidden'); 
+          loadApiKeys(); 
+        } else msg.innerHTML = '<div class="text-red-400">❌ '+data.message+'</div>'; 
+      } catch(e) { msg.innerHTML = '<div class="text-red-400">❌ Error</div>'; }
+    };
+
+    async function testApiKeys() {
+      const msg = document.getElementById('apiKeyMessage'); 
+      const apiKey = document.getElementById('apiKeyInput').value.trim(); 
+      const apiSecret = document.getElementById('apiSecretInput').value.trim(); 
+      const useTestnet = document.getElementById('testnetToggle').classList.contains('active'); 
+      if (!apiKey || !apiSecret) { 
+        msg.innerHTML = '<div class="text-amber-400">⚠️ Fill both fields</div>'; 
+        return; 
+      } 
+      msg.innerHTML = '<div class="w-5 h-5 border-2 border-purple-400/30 border-t-purple-400 rounded-full animate-spin mx-auto"></div>'; 
+      try { 
+        const resp = await fetch('/api/user/api-keys/test', { 
+          method:'POST', 
+          headers:{'Content-Type':'application/json'}, 
+          body: JSON.stringify({ api_key: apiKey, api_secret: apiSecret, testnet: useTestnet }) 
+        }); 
+        const data = await resp.json(); 
+        if (data.success) { 
+          msg.innerHTML = '<div class="text-emerald-400">✅ '+data.message+'</div>'; 
+          showToast('API keys valid!', 'success'); 
+        } else msg.innerHTML = '<div class="text-red-400">❌ '+data.message+'</div>'; 
+      } catch(e) { msg.innerHTML = '<div class="text-red-400">❌ Error</div>'; }
+    }
+
+    function toggleTestnet() { document.getElementById('testnetToggle').classList.toggle('active'); }
+
+    // ============================================================
+    // PROFILE / SETTINGS
+    // ============================================================
+    async function loadProfile() { 
+      if (!currentUser) return; 
+      try { 
+        const resp = await fetch('/api/user/profile'); 
+        const data = await resp.json(); 
+        if (data.success && data.user) { 
+          const u = data.user; 
+          document.getElementById('profileEmail').textContent = u.email || 'No email set';
+          document.getElementById('profileEmailInput').value = u.email || ''; 
+          document.getElementById('profileJoined').textContent = u.registration_date ? new Date(u.registration_date).toLocaleDateString() : '-';
+        } 
+      } catch(e) {
+        console.error('Load profile error:', e);
+      } 
+    }
+
+    document.getElementById('profileForm').onsubmit = async function(e) {
+      e.preventDefault(); 
+      const msg = document.getElementById('profileMessage'); 
+      const email = document.getElementById('profileEmailInput').value.trim(); 
+      const password = document.getElementById('profilePasswordInput').value; 
+      msg.innerHTML = '<div class="w-5 h-5 border-2 border-purple-400/30 border-t-purple-400 rounded-full animate-spin mx-auto"></div>'; 
+      try { 
+        const payload = { email }; 
+        if (password) payload.password = password; 
+        const resp = await fetch('/api/user/profile', { 
+          method:'PUT', 
+          headers:{'Content-Type':'application/json'}, 
+          body: JSON.stringify(payload) 
+        }); 
+        const data = await resp.json(); 
+        if (data.success) { 
+          msg.innerHTML = '<div class="text-emerald-400">✅ '+data.message+'</div>'; 
+          showToast('Profile updated!', 'success'); 
+          document.getElementById('profilePasswordInput').value=''; 
+          loadProfile(); 
+        } else msg.innerHTML = '<div class="text-red-400">❌ '+data.message+'</div>'; 
+      } catch(e) { msg.innerHTML = '<div class="text-red-400">❌ Error</div>'; }
+    };
+
+    async function loadSettings() {
+      try { 
+        const resp = await fetch('/api/user/settings'); 
+        const data = await resp.json(); 
+        if (data.success && data.data) { 
+          const s = data.data; 
+          document.getElementById('settingsSymbol').value = s.symbol||'BTCUSDT'; 
+          document.getElementById('settingsCapital').value = s.total_capital||1000; 
+          document.getElementById('settingsBasePosition').value = s.base_position||100; 
+          document.getElementById('settingsDumpThresholds').value = (s.dump_thresholds||[]).join(',') || '2,4,6,8'; 
+          document.getElementById('settingsSpikeThresholds').value = (s.spike_thresholds||[]).join(',') || '2,4,6,8'; 
+        } 
+      } catch(e) {}
+    }
+
+    document.getElementById('settingsForm').onsubmit = async function(e) {
+      e.preventDefault(); 
+      const msg = document.getElementById('settingsMessage'); 
+      const dump = document.getElementById('settingsDumpThresholds').value.split(',').map(Number).filter(n=>!isNaN(n)); 
+      const spike = document.getElementById('settingsSpikeThresholds').value.split(',').map(Number).filter(n=>!isNaN(n)); 
+      const data = { 
+        symbol: document.getElementById('settingsSymbol').value, 
+        total_capital: parseFloat(document.getElementById('settingsCapital').value)||1000, 
+        base_position: parseFloat(document.getElementById('settingsBasePosition').value)||100, 
+        dump_thresholds: dump.length?dump:[2,4,6,8], 
+        spike_thresholds: spike.length?spike:[2,4,6,8] 
+      }; 
+      msg.innerHTML = '<div class="w-5 h-5 border-2 border-purple-400/30 border-t-purple-400 rounded-full animate-spin mx-auto"></div>'; 
+      try { 
+        const resp = await fetch('/api/user/settings', { 
+          method:'PUT', 
+          headers:{'Content-Type':'application/json'}, 
+          body: JSON.stringify(data) 
+        }); 
+        const result = await resp.json(); 
+        if (result.success) { 
+          msg.innerHTML = '<div class="text-emerald-400">✅ '+result.message+'</div>'; 
+          showToast('Settings saved!', 'success'); 
+        } else msg.innerHTML = '<div class="text-red-400">❌ '+result.message+'</div>'; 
+      } catch(e) { msg.innerHTML = '<div class="text-red-400">❌ Error</div>'; }
+    };
+
+    // ============================================================
+    // BOT CONTROLS
+    // ============================================================
+    async function startBot() { 
+      if (isStarting || !isLoggedIn) return; 
+      isStarting = true; 
+      currentSymbol = document.getElementById('coinSelect').value; 
+      updateButtons(false,false,true); 
+      try { 
+        const resp = await fetch('/api/control/start', { 
+          method:'POST', 
+          headers:{'Content-Type':'application/json'}, 
+          body: JSON.stringify({ symbol: currentSymbol }) 
+        }); 
+        const data = await resp.json(); 
+        showToast(data.message, data.success?'success':'error'); 
+      } catch(e) { showToast('Error starting bot', 'error'); } 
+      setTimeout(() => { isStarting = false; fetchStatus(); }, 4000); 
+    }
+    
+    async function stopBot() { 
+      if (isStopping || !isLoggedIn) return; 
+      isStopping = true; 
+      updateButtons(false,false,false); 
+      try { 
+        const resp = await fetch('/api/control/stop', { method:'POST' }); 
+        const data = await resp.json(); 
+        showToast(data.message, data.success?'info':'error'); 
+      } catch(e) { showToast('Error stopping bot', 'error'); } 
+      setTimeout(() => { isStopping = false; fetchStatus(); }, 2000); 
+    }
+    
+    async function pauseBot() { 
+      if (!isLoggedIn) return; 
+      try { 
+        const resp = await fetch('/api/control/pause', { method:'POST' }); 
+        const data = await resp.json(); 
+        showToast(data.message, data.success?'info':'error'); 
+        if (data.success) setTimeout(fetchStatus, 500); 
+      } catch(e) {} 
+    }
+    
+    async function resumeBot() { 
+      if (!isLoggedIn) return; 
+      try { 
+        const resp = await fetch('/api/control/resume', { method:'POST' }); 
+        const data = await resp.json(); 
+        showToast(data.message, data.success?'success':'error'); 
+        if (data.success) setTimeout(fetchStatus, 500); 
+      } catch(e) {} 
+    }
+
+    document.getElementById('coinSelect').onchange = function() {
+        currentSymbol = this.value; 
+        document.getElementById('symbolDisplay').textContent = getDisplaySymbol(currentSymbol); 
+        document.getElementById('chartTitle').textContent = getDisplaySymbol(currentSymbol); 
+        fetchPriceHistory(); 
+        document.getElementById('settingsSymbol').value = currentSymbol;
+    };
+
+    // ============================================================
+    // FETCHES
+    // ============================================================
+ async function fetchStatus() {
+    if (!isLoggedIn) return;
+    try {
+        const resp = await fetch('/api/status?symbol=' + encodeURIComponent(document.getElementById('coinSelect').value));
+        if (resp.status === 401) { updateUserUI(null); return; }
+        const data = await resp.json();
+        updateButtons(data.running, data.paused, data.starting);
+        updatePIDDisplay(data.pid);
+        
+        document.getElementById('currentPrice').textContent = data.current_price ? 
+            (data.current_price >= 1 ? '$' + data.current_price.toFixed(2) : '$' + data.current_price.toFixed(6)) : '$0.00';
+        
+        // Update balance
+        document.getElementById('balance').textContent = '$' + (data.balance || 0).toFixed(2);
+        document.getElementById('totalCapital').textContent = '$' + (data.total_capital || 0);
+        
+        // Update assets display
+        if (data.all_balances && data.all_balances.length) {
+            updateAssetDisplay(data.all_balances);
+        } else {
+            updateAssetDisplay([]);
+        }
+        
+
+      const pos = document.getElementById('positionContent');
+      if (data.position && data.position.position_active) {
+          const pnl = data.position.unrealized_pnl || 0;
+          const tokens = data.position.tokens || 0;
+          const avgCost = data.position.avg_cost || 0;
+          const totalInvested = data.position.total_invested || 0;
+          const symbol = data.position.symbol || 'BTCUSDT';
+          
+          pos.innerHTML = `<div class="space-y-1.5 text-sm">
+              <div class="flex justify-between"><span class="text-gray-400">Symbol</span><span class="text-white font-mono">${symbol}</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">Quantity</span><span class="text-white font-mono">${tokens.toFixed(8)}</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">Avg Cost</span><span class="text-white font-mono">$${avgCost.toFixed(2)}</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">Invested</span><span class="text-white font-mono">$${totalInvested.toFixed(2)}</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">P&L</span><span class="${pnl >= 0 ? 'text-emerald-400' : 'text-red-400'} font-mono">${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}</span></div>
+          </div>`;
+      } else {
+          pos.innerHTML = '<div class="text-center text-gray-500 py-6 text-sm">No active position</div>';
+      }
+              
+        // Update thresholds
+        const dump = document.getElementById('dumpThresholds');
+        const dumpThresholds = data.dump_thresholds || [2, 4, 6, 8];
+        dump.innerHTML = dumpThresholds.map((t, i) =>
+            `<div class="bg-red-500/10 rounded-lg p-1.5 text-center border border-red-500/20">
+                <div class="text-white font-bold text-sm">${t}%</div>
+                <div class="text-gray-400 text-[10px]">L${i + 1}</div>
+            </div>`
+        ).join('');
+        
+        const spike = document.getElementById('spikeThresholds');
+        const spikeThresholds = data.spike_thresholds || [2, 4, 6, 8];
+        spike.innerHTML = spikeThresholds.map((t, i) =>
+            `<div class="bg-emerald-500/10 rounded-lg p-1.5 text-center border border-emerald-500/20">
+                <div class="text-white font-bold text-sm">${t}%</div>
+                <div class="text-gray-400 text-[10px]">L${i + 1}</div>
+            </div>`
+        ).join('');
+        
+        document.getElementById('buyLevels').textContent = data.position?.buy_levels_executed?.join(', ') || '-';
+        document.getElementById('sellLevels').textContent = data.position?.sell_levels_executed?.join(', ') || '-';
+        
+        if (data.has_api_keys === false) {
+            document.getElementById('apiKeyWarning').classList.remove('hidden');
+        } else {
+            document.getElementById('apiKeyWarning').classList.add('hidden');
+        }
+        
+        // Update available coins if returned
+        if (data.available_coins && data.available_coins.length) {
+            availableCoins = data.available_coins;
+            updateCoinSelects();
+        }
+    } catch (e) { console.error('Fetch status error:', e); }
+}
+
+function updateAssetDisplay(assets) {
+    const container = document.getElementById('assetDisplay');
+    if (!assets || assets.length === 0) {
+        container.innerHTML = '<div class="text-gray-500 text-sm py-2">No purchased assets</div>';
+        return;
+    }
+    
+    let html = '';
+    assets.forEach(a => {
+        const pnl = a.pnl || 0;
+        const pnlClass = pnl >= 0 ? 'text-emerald-400' : 'text-red-400';
+        const value = a.value || 0;
+        
+        html += `<div class="asset-item" style="display:flex; justify-content:space-between; padding:8px 12px; border-bottom:1px solid rgba(255,255,255,0.05);">
+            <div>
+                <span class="asset-symbol" style="font-weight:600; color:#e5e7eb;">${a.symbol || 'Unknown'}</span>
+                <div style="font-size:10px; color:#6b7280;">${(a.quantity || 0).toFixed(6)} @ $${(a.avg_cost || 0).toFixed(2)}</div>
+            </div>
+            <div style="text-align:right;">
+                <div style="color:#e5e7eb; font-weight:500;">$${value.toFixed(2)}</div>
+                <div style="font-size:10px; ${pnlClass}">${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}</div>
+            </div>
+        </div>`;
+    });
+    container.innerHTML = html;
+    
+    // Auto-expand if there are assets
+    const list = document.getElementById('assetList');
+    const toggle = document.getElementById('assetToggle');
+    if (assets.length > 0) {
+        list.classList.add('open');
+        toggle.classList.add('open');
+    }
+}
+
+    async function fetchPerformance() { 
+      if (!isLoggedIn) return; 
+      try { 
+        const resp = await fetch('/api/performance'); 
+        if (resp.status===401) return; 
+        const data = await resp.json(); 
+        document.getElementById('totalTrades').textContent = data.total_trades||0; 
+        document.getElementById('winRate').textContent = (data.win_rate||0).toFixed(1)+'%'; 
+        const tp = document.getElementById('totalProfit'); 
+        const profit = data.total_profit||0; 
+        tp.textContent = '$'+profit.toFixed(2); 
+        tp.className = 'stat-number '+(profit>=0?'text-emerald-400':'text-red-400'); 
+        const td = document.getElementById('todayProfit'); 
+        const todayP = data.today_profit||0; 
+        td.textContent = '$'+todayP.toFixed(2); 
+        td.className = todayP>=0?'text-emerald-400':'text-red-400'; 
+      } catch(e) {} 
+    }
+
+    async function fetchTrades() { 
+      if (!isLoggedIn) return; 
+      try { 
+        const resp = await fetch('/api/trades?limit=10'); 
+        if (resp.status===401) return; 
+        const trades = await resp.json(); 
+        const container = document.getElementById('tradeList'); 
+        document.getElementById('tradeCount').textContent = trades.length||0; 
+        if (!trades || !trades.length) { 
+          container.innerHTML = '<div class="text-center text-gray-500 py-4 text-sm">No trades yet</div>'; 
+          return; 
+        } 
+        container.innerHTML = trades.slice(0,10).map(t => { 
+          const isBuy = (t.side||'').toLowerCase() === 'buy'; 
+          return `<div class="trade-row flex items-center justify-between ${isBuy?'border-l-2 border-l-emerald-500':'border-l-2 border-l-red-500'} bg-white/5 rounded-lg p-2">
+            <div>
+              <span class="font-bold text-sm ${isBuy?'text-emerald-400':'text-red-400'}">${t.side||'UNKNOWN'}</span>
+              <span class="text-gray-500 text-xs ml-2">${t.level ? 'L'+t.level : ''}</span>
+              <div class="text-gray-500 text-[10px]">${t.timestamp ? new Date(t.timestamp).toLocaleTimeString() : ''}</div>
+            </div>
+            <div class="text-right">
+              <div class="text-white font-mono text-sm">$${(t.price||0).toFixed(2)}</div>
+              <div class="text-gray-500 text-[10px]">${(t.quantity||0).toFixed(6)}</div>
+            </div>
+            ${t.profit!==undefined ? `<div class="text-right font-bold text-sm ${t.profit>=0?'text-emerald-400':'text-red-400'}">$${t.profit.toFixed(2)}</div>` : ''}
+          </div>`; 
+        }).join(''); 
+      } catch(e) {} 
+    }
+
+    async function fetchLogs() { 
+      if (!isLoggedIn) return; 
+      try { 
+        const resp = await fetch('/api/logs?lines=30'); 
+        if (resp.status===401) return; 
+        const logs = await resp.json(); 
+        const container = document.getElementById('logContainer'); 
+        document.getElementById('logCount').textContent = logs.length||0; 
+        if (!logs || !logs.length) { 
+          container.innerHTML = '<div class="text-gray-500 py-4 text-center">No logs</div>'; 
+          return; 
+        } 
+        container.innerHTML = logs.slice(0,30).map(l => { 
+          const c = { ERROR:'text-red-400', BUY:'text-emerald-400', SELL:'text-red-400', WARNING:'text-amber-400', SYSTEM:'text-cyan-400' }[l.type] || 'text-gray-300'; 
+          const icon = { ERROR:'❌', BUY:'📈', SELL:'📉', WARNING:'⚠️', SYSTEM:'🔄' }[l.type] || 'ℹ️'; 
+          return `<div class="log-line ${c}"><span class="text-white/20">[${l.timestamp}]</span> ${icon} ${l.message}</div>`; 
+        }).join(''); 
+      } catch(e) {} 
+    }
+
+    async function fetchPriceHistory() {
+      try { 
+        const resp = await fetch('/api/price/history?hours=24&symbol='+encodeURIComponent(document.getElementById('coinSelect').value)); 
+        const prices = await resp.json(); 
+        if (prices && prices.length) { 
+          priceHistory = prices.filter(p => p.time && p.price !== undefined); 
+          if (priceHistory.length) { 
+            updateChart(priceHistory); 
+            return; 
+          } 
+        } 
+      } catch(e) { console.error(e); }
+    }
+
+    function fetchAll() { 
+      if (isLoggedIn) { 
+        fetchStatus(); 
+        fetchPerformance(); 
+        fetchTrades(); 
+        fetchLogs(); 
+      } 
+      fetchPriceHistory(); 
+    }
+
+    // ============================================================
+    // DELETE ACCOUNT
+    // ============================================================
+    function confirmDeleteAccount() { 
+      if (!isLoggedIn) { showToast('Login required', 'warning'); return; } 
+      document.getElementById('deleteConfirmInput').value=''; 
+      document.getElementById('deleteMessage').innerHTML=''; 
+      showModal('deleteAccountModal'); 
+    }
+
+    async function deleteAccount() { 
+      const confirmInput = document.getElementById('deleteConfirmInput').value.trim(); 
+      const msg = document.getElementById('deleteMessage'); 
+      if (confirmInput !== 'DELETE') { 
+        msg.innerHTML = '<div class="text-red-400">⚠️ Type "DELETE"</div>'; 
+        return; 
+      } 
+      msg.innerHTML = '<div class="w-5 h-5 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin mx-auto"></div>'; 
+      try { 
+        const resp = await fetch('/api/user/delete', { method:'DELETE' }); 
+        const data = await resp.json(); 
+        if (data.success) { 
+          msg.innerHTML = '<div class="text-emerald-400">✅ '+data.message+'</div>'; 
+          showToast('Account deleted', 'success'); 
+          setTimeout(() => { hideModal('deleteAccountModal'); updateUserUI(null); }, 1200); 
+        } else msg.innerHTML = '<div class="text-red-400">❌ '+data.message+'</div>'; 
+      } catch(e) { msg.innerHTML = '<div class="text-red-400">❌ Error</div>'; } 
+    }
+
+    // ============================================================
+    // INIT
+    // ============================================================
+    function init() {
+      document.querySelectorAll('.desktop-nav-item').forEach(el => el.classList.remove('active'));
+      document.querySelector('.desktop-nav-item[data-tab="dashboard"]')?.classList.add('active');
+      document.querySelectorAll('.mobile-nav-item').forEach(el => el.classList.remove('active'));
+      document.querySelector('.mobile-nav-item[data-tab="dashboard"]')?.classList.add('active');
+      
+      document.querySelectorAll('.mobile-nav-item').forEach(el => {
+        const tab = el.getAttribute('data-tab');
+        if (!['pricing', 'api-docs', 'support', 'privacy', 'terms', 'cookies'].includes(tab)) {
+          el.style.display = 'none';
+        }
+      });
+      
+      checkAuth();
+      
+      // Populate coins initially (before login)
+      setTimeout(async () => {
+        await populateCoinSelects();
+        fetchPriceHistory();
+        initChart();
+      }, 500);
+      
+      updateInterval = setInterval(fetchAll, 5000);
+      
+      document.addEventListener('keydown', e => { 
+        if (e.key==='Escape') { 
+          document.querySelectorAll('.modal-overlay.active').forEach(el => el.classList.remove('active')); 
+          closeMobileNav(); 
+        } 
+      });
+    }
+    
+    document.addEventListener('DOMContentLoaded', init);
+    window.addEventListener('beforeunload', () => { 
+      if (updateInterval) clearInterval(updateInterval); 
+      if (priceChart) { priceChart.destroy(); priceChart=null; } 
+    });
+</script>
+</body>
+</html>
