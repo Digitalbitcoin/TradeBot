@@ -1,0 +1,82 @@
+{
+  "abbyyy": {
+    "id": "user_1781707076_abbyy",
+    "username": "abbyyy",
+    "password": "Abhi@1234",
+    "email": "abbyyys@gmail.com",
+    "referral_code": "12355555",
+    "referred_by": null,
+    "balance": 20.0,
+    "total_bonus": 20.0,
+    "referrals": [
+      "user_1781710104_8684",
+      "user_1782043375_9879"
+    ],
+    "registration_date": "2026-06-17T20:07:56.347000",
+    "active": true,
+    "settings": {
+      "symbol": "BTCUSDT",
+      "total_capital": 1000,
+      "base_position": 100,
+      "dump_thresholds": [
+        0
+      ],
+      "spike_thresholds": [
+        0
+      ]
+    },
+    "api_key": "6qOniqeXEszJb2qoFNMweS2ZCfhqXZORAcNtI2HBcerxQ7Tc8OTP0z6BiD1J0tia",
+    "api_secret": "wkvfoHR1PRBqZiie60D5H2VVr5xda7SvejhMXfdC6I4BR221q6stGGQmF0q1bYMZ",
+    "use_testnet": true
+  },
+  "abhijit": {
+    "id": "user_1781710104_8684",
+    "username": "abhijit",
+    "password": "Abhi@1234",
+    "email": "digitalcryptocoin@gmail.com",
+    "referral_code": "38615375",
+    "referred_by": "user_1781707076_abbyy",
+    "balance": 0.0,
+    "total_bonus": 0.0,
+    "referrals": [],
+    "registration_date": "2026-06-17T20:58:24.020288",
+    "active": true,
+    "api_key": "6qOniqeXEszJb2qoFNMweS2ZCfhqXZORAcNtI2HBcerxQ7Tc8OTP0z6BiD1J0tia",
+    "api_secret": "wkvfoHR1PRBqZiie60D5H2VVr5xda7SvejhMXfdC6I4BR221q6stGGQmF0q1bYMZ",
+    "use_testnet": true,
+    "settings": {
+      "symbol": "BTCUSDT",
+      "total_capital": 1000,
+      "base_position": 100,
+      "dump_thresholds": [
+        2,
+        4,
+        6,
+        8
+      ],
+      "spike_thresholds": [
+        2,
+        4,
+        6,
+        8
+      ]
+    }
+  },
+  "test": {
+    "id": "user_1782043375_9879",
+    "username": "test",
+    "password": "test@123",
+    "email": "test@te.st",
+    "referral_code": "13027200",
+    "referred_by": "user_1781707076_abbyy",
+    "balance": 0.0,
+    "total_bonus": 0.0,
+    "referrals": [],
+    "registration_date": "2026-06-21T17:32:55.124200",
+    "active": true,
+    "api_key": null,
+    "api_secret": null,
+    "use_testnet": true,
+    "has_api_keys": false
+  }
+}
