@@ -43,33 +43,12 @@ bot_data_cache = {
 price_history = []
 MAX_PRICE_HISTORY = 500
 
-# User management
-users_file = Path('data/users.json')
-users = {}
-
-def load_users():
-    """Load users from JSON file"""
-    global users
-    if users_file.exists():
-        try:
-            with open(users_file, 'r', encoding='utf-8') as f:
-                users = json.load(f)
-                return users
-        except Exception as e:
-            print(f"Error loading users: {e}")
-    return {}
-
-def save_users():
-    """Save users to JSON file"""
-    try:
-        os.makedirs('data', exist_ok=True)
-        with open(users_file, 'w', encoding='utf-8') as f:
-            json.dump(users, f, indent=2)
-    except Exception as e:
-        print(f"Error saving users: {e}")
-
-# Load users on startup
-load_users()
+# Import referral manager
+try:
+    from referral_manager import ReferralManager
+    referral_manager = ReferralManager()
+except:
+    referral_manager = None
 
 def login_required(f):
     @wraps(f)
@@ -115,6 +94,9 @@ def get_config_values(username=None):
             'dump_thresholds': getattr(config, 'DUMP_THRESHOLDS', [2, 4, 6, 8]),
             'spike_thresholds': getattr(config, 'SPIKE_THRESHOLDS', [2, 4, 6, 8]),
             'sell_percentages': getattr(config, 'SELL_PERCENTAGES', [25, 25, 25, 25]),
+            'enable_referral': getattr(config, 'ENABLE_REFERRAL', True),
+            'referral_bonus': getattr(config, 'REFERRAL_BONUS', 10.0),
+            'referral_commission': getattr(config, 'REFERRAL_COMMISSION', 5.0),
             'available_coins': getattr(config, 'AVAILABLE_COINS', 'BTCUSDT,ETHUSDT,BNBUSDT,SOLUSDT').split(',')
         }
     except Exception as e:
@@ -127,11 +109,18 @@ def get_config_values(username=None):
             'dump_thresholds': [2, 4, 6, 8],
             'spike_thresholds': [2, 4, 6, 8],
             'sell_percentages': [25, 25, 25, 25],
+            'enable_referral': True,
+            'referral_bonus': 10.0,
+            'referral_commission': 5.0,
             'available_coins': ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT']
         }
 
 def get_user_api_keys(username):
     """Get API keys for a specific user from users.json"""
+    if not referral_manager:
+        return None, None
+    
+    users = referral_manager.users
     if username in users:
         user_data = users[username]
         return user_data.get('api_key'), user_data.get('api_secret')
@@ -139,66 +128,17 @@ def get_user_api_keys(username):
 
 def save_user_api_keys(username, api_key, api_secret, testnet=True):
     """Save API keys for a specific user"""
+    if not referral_manager:
+        return False
+    
+    users = referral_manager.users
     if username in users:
         users[username]['api_key'] = api_key
         users[username]['api_secret'] = api_secret
         users[username]['use_testnet'] = testnet
-        save_users()
+        referral_manager._save_users()
         return True
     return False
-
-def authenticate_user(username, password):
-    """Authenticate a user"""
-    if username in users:
-        return users[username].get('password') == password
-    return False
-
-def register_user(username, password, email=None):
-    """Register a new user"""
-    if username in users:
-        return {'success': False, 'message': 'Username already exists'}
-    
-    import random
-    import time
-    
-    user_id = f"user_{int(time.time())}_{random.randint(1000, 9999)}"
-    
-    users[username] = {
-        'id': user_id,
-        'username': username,
-        'password': password,
-        'email': email or '',
-        'registration_date': datetime.now().isoformat(),
-        'active': True,
-        'api_key': None,
-        'api_secret': None,
-        'use_testnet': True,
-        'settings': {
-            'symbol': 'BTCUSDT',
-            'total_capital': 1000,
-            'base_position': 100,
-            'dump_thresholds': [2, 4, 6, 8],
-            'spike_thresholds': [2, 4, 6, 8]
-        }
-    }
-    
-    save_users()
-    return {'success': True, 'message': 'Registration successful'}
-
-def get_user_summary(username):
-    """Get user summary"""
-    if username not in users:
-        return None
-    
-    user = users[username]
-    return {
-        'username': username,
-        'email': user.get('email', ''),
-        'registration_date': user.get('registration_date', ''),
-        'has_api_keys': bool(user.get('api_key') and user.get('api_secret')),
-        'use_testnet': user.get('use_testnet', True),
-        'settings': user.get('settings', {})
-    }
 
 def get_bot_data(symbol=None, username=None):
     """Get real bot data for a specific user and symbol"""
@@ -233,7 +173,7 @@ def get_bot_data(symbol=None, username=None):
         client = Client(api_key, api_secret)
         
         # Set testnet if configured
-        user_data = users.get(username, {})
+        user_data = referral_manager.users.get(username, {})
         if user_data.get('use_testnet', True):
             client.API_URL = 'https://testnet.binance.vision/api'
             client.WAPI_URL = 'https://testnet.binance.vision/wapi'
@@ -250,108 +190,29 @@ def get_bot_data(symbol=None, username=None):
                 'price': float(price),
                 'symbol': symbol
             })
+            # Keep only the last MAX_PRICE_HISTORY entries
             if len(price_history) > MAX_PRICE_HISTORY:
                 price_history = price_history[-MAX_PRICE_HISTORY:]
         
-        # Get USDT balance
-        usdt_balance = 0.0
+        # Get balance
+        balance = None
         try:
             account = client.get_account()
             for bal in account['balances']:
                 if bal['asset'] == 'USDT':
-                    usdt_balance = float(bal['free'])
+                    balance = float(bal['free'])
                     break
-        except Exception as e:
-            print(f"Error fetching balance: {e}")
+        except:
+            pass
         
-        # Get purchased assets from trades history
-        purchased_assets = []
-        active_position = {'position_active': False, 'tokens': 0, 'avg_cost': 0, 'total_invested': 0}
-        
-        try:
-            trades_file = Path('data/trades_history.csv')
-            if trades_file.exists():
-                import csv
-                with open(trades_file, 'r', encoding='utf-8') as f:
-                    reader = csv.DictReader(f)
-                    trades = list(reader)
-                    
-                    # Track holdings per symbol
-                    holdings = {}
-                    for trade in trades:
-                        side = trade.get('side', '').upper()
-                        qty = float(trade.get('quantity', 0))
-                        price_val = float(trade.get('price', 0))
-                        trade_symbol = trade.get('symbol', 'BTCUSDT')
-                        
-                        if side == 'BUY':
-                            if trade_symbol not in holdings:
-                                holdings[trade_symbol] = {'total_qty': 0, 'total_cost': 0, 'avg_price': 0}
-                            holdings[trade_symbol]['total_qty'] += qty
-                            holdings[trade_symbol]['total_cost'] += qty * price_val
-                            holdings[trade_symbol]['avg_price'] = holdings[trade_symbol]['total_cost'] / holdings[trade_symbol]['total_qty']
-                        elif side == 'SELL':
-                            if trade_symbol in holdings:
-                                # Reduce holding
-                                sell_qty = qty
-                                # Calculate cost basis for sold amount
-                                cost_basis = sell_qty * holdings[trade_symbol]['avg_price']
-                                holdings[trade_symbol]['total_qty'] -= sell_qty
-                                holdings[trade_symbol]['total_cost'] -= cost_basis
-                                if holdings[trade_symbol]['total_qty'] <= 0:
-                                    del holdings[trade_symbol]
-                    
-                    # Build purchased assets list
-                    for sym, data in holdings.items():
-                        if data['total_qty'] > 0:
-                            # Get current price for this symbol
-                            current_price = None
-                            try:
-                                if sym == 'BTCUSDT' and price:
-                                    current_price = price
-                                else:
-                                    ticker_info = client.get_symbol_ticker(symbol=sym)
-                                    current_price = float(ticker_info['price']) if ticker_info else None
-                            except:
-                                pass
-                            
-                            purchased_assets.append({
-                                'symbol': sym,
-                                'quantity': data['total_qty'],
-                                'avg_cost': data['avg_price'],
-                                'total_cost': data['total_cost'],
-                                'current_price': current_price,
-                                'value': data['total_qty'] * current_price if current_price else 0,
-                                'pnl': (data['total_qty'] * current_price - data['total_cost']) if current_price else 0
-                            })
-                            
-                            # Set active position for the main symbol
-                            if sym == symbol:
-                                active_position = {
-                                    'position_active': True,
-                                    'tokens': data['total_qty'],
-                                    'avg_cost': data['avg_price'],
-                                    'total_invested': data['total_cost'],
-                                    'unrealized_pnl': (data['total_qty'] * current_price - data['total_cost']) if current_price else 0,
-                                    'symbol': sym,
-                                    'current_price': current_price
-                                }
-        except Exception as e:
-            print(f"Error reading trades for purchased assets: {e}")
-        
-        # Use cached position for buy/sell levels
-        if bot_data_cache.get('position'):
-            cached_pos = bot_data_cache.get('position', {})
-            if cached_pos.get('buy_levels_executed'):
-                active_position['buy_levels_executed'] = cached_pos.get('buy_levels_executed', [])
-            if cached_pos.get('sell_levels_executed'):
-                active_position['sell_levels_executed'] = cached_pos.get('sell_levels_executed', [])
+        # Get position info - simplified for demo
+        # In a real implementation, you'd track positions per user/symbol
+        position = bot_data_cache.get('position', {'position_active': False})
         
         bot_data_cache = {
             'price': price,
-            'balance': usdt_balance,
-            'purchased_assets': purchased_assets,  # Only bot-purchased assets
-            'position': active_position,
+            'balance': balance,
+            'position': position,
             'symbol': symbol,
             'username': username,
             'last_update': time.time()
@@ -362,8 +223,7 @@ def get_bot_data(symbol=None, username=None):
     except Exception as e:
         print(f"Error getting bot data for {username}: {e}")
         return {'error': str(e)}
-
-
+    
 def update_price_history(price, symbol=None):
     global price_history
     if price is None:
@@ -533,23 +393,25 @@ def check_auth():
 
 @app.route('/api/auth/login', methods=['POST'])
 def login_user():
+    if not referral_manager:
+        return jsonify({'success': False, 'message': 'Referral system not available'})
     data = request.get_json()
     if not data:
         return jsonify({'success': False, 'message': 'No data provided'})
-    
     username = data.get('username')
     password = data.get('password')
-    
     if not username or not password:
         return jsonify({'success': False, 'message': 'Username and password required'})
-    
-    if authenticate_user(username, password):
+    authenticated = referral_manager.authenticate_user(username, password)
+    if authenticated:
         session['logged_in'] = True
         session['username'] = username
         
-        user_data = users.get(username, {})
-        summary = get_user_summary(username)
+        # Get user data directly from users dict to ensure email is included
+        user_data = referral_manager.users.get(username, {})
+        summary = referral_manager.get_user_summary(username)
         
+        # Ensure email is included in the response
         if summary:
             summary['email'] = user_data.get('email', '')
             summary['has_api_keys'] = bool(user_data.get('api_key') and user_data.get('api_secret'))
@@ -563,23 +425,26 @@ def login_user():
         return jsonify({'success': False, 'message': 'Invalid username or password'})
 
 @app.route('/api/auth/register', methods=['POST'])
-def register_user_route():
+def register_user():
+    if not referral_manager:
+        return jsonify({'success': False, 'message': 'Referral system not available'})
     data = request.get_json()
     if not data:
         return jsonify({'success': False, 'message': 'No data provided'})
-    
     username = data.get('username')
     password = data.get('password')
     email = data.get('email', '').strip()
+    referral_code = data.get('referral_code')
     
     if not username or not password:
         return jsonify({'success': False, 'message': 'Username and password required'})
     
     # Check if username exists
-    if username in users:
+    if username in referral_manager.users:
         return jsonify({'success': False, 'message': 'Username already exists'})
     
-    result = register_user(username, password, email)
+    # Create user with email
+    result = referral_manager.register_user(username, password, email, referral_code)
     return jsonify(result)
 
 @app.route('/api/auth/logout', methods=['POST'])
@@ -593,7 +458,7 @@ def get_user_api_keys_route():
     """Get API key status for current user"""
     username = session.get('username')
     api_key, api_secret = get_user_api_keys(username)
-    user_data = users.get(username, {})
+    user_data = referral_manager.users.get(username, {})
     return jsonify({
         'success': True,
         'has_api_key': bool(api_key),
@@ -661,9 +526,11 @@ def get_status():
     username = session.get('username')
     config_values = get_config_values()
     
+    # Check if user has API keys
     api_key, api_secret = get_user_api_keys(username)
     has_api_keys = bool(api_key and api_secret)
     
+    # Check if bot is running
     pid_file = Path('bot.pid')
     is_running = False
     pid = None
@@ -685,14 +552,10 @@ def get_status():
         except:
             pass
     
+    # Get real data only if bot is running and user has API keys
     bot_data = None
     if is_running and has_api_keys:
         bot_data = get_bot_data(symbol, username)
-    
-    available_coins = config_values.get('available_coins', ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT', 'ADAUSDT', 'DOGEUSDT'])
-    
-    # Get purchased assets from bot_data
-    purchased_assets = bot_data.get('purchased_assets') if bot_data and isinstance(bot_data, dict) else []
     
     status = {
         'running': is_running,
@@ -705,10 +568,9 @@ def get_status():
         'dump_thresholds': config_values['dump_thresholds'],
         'spike_thresholds': config_values['spike_thresholds'],
         'sell_percentages': config_values['sell_percentages'],
-        'available_coins': available_coins,
+        'available_coins': config_values.get('available_coins', ['BTCUSDT', 'ETHUSDT']),
         'current_price': bot_data.get('price') if bot_data and isinstance(bot_data, dict) else None,
         'balance': bot_data.get('balance') if bot_data and isinstance(bot_data, dict) else None,
-        'purchased_assets': purchased_assets,  # Only bot-purchased assets
         'position': bot_data.get('position') if bot_data and isinstance(bot_data, dict) else None,
         'has_api_keys': has_api_keys,
         'pid': pid,
@@ -720,17 +582,6 @@ def get_status():
         status['error'] = bot_data['error']
     
     return jsonify(status)
-
-@app.route('/api/available-coins')
-@login_required
-def get_available_coins():
-    """Get list of available trading coins"""
-    config_values = get_config_values()
-    available_coins = config_values.get('available_coins', ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT', 'ADAUSDT', 'DOGEUSDT'])
-    return jsonify({
-        'success': True,
-        'coins': available_coins
-    })
 
 @app.route('/api/price/history')
 def get_price_history():
@@ -998,6 +849,44 @@ def resume_bot():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
 
+@app.route('/api/referral/stats')
+@login_required
+def get_referral_stats():
+    if not referral_manager:
+        return jsonify({'success': False, 'message': 'Referral system not available'})
+    stats = referral_manager.get_referral_stats()
+    return jsonify(stats)
+
+@app.route('/api/referral/user/<username>')
+@login_required
+def get_user_referrals(username):
+    if not referral_manager:
+        return jsonify({'success': False, 'message': 'Referral system not available'})
+    if session.get('username') != username:
+        return jsonify({'success': False, 'message': 'Access denied'})
+    
+    # Get user data directly to ensure email is included
+    user_data = referral_manager.users.get(username, {})
+    summary = referral_manager.get_user_summary(username)
+    
+    if not summary:
+        return jsonify({'success': False, 'message': 'User not found'})
+    
+    # Ensure email is included
+    summary['email'] = user_data.get('email', '')
+    
+    return jsonify({'success': True, 'data': summary})
+
+@app.route('/api/referral/check/<code>')
+def check_referral_code(code):
+    if not referral_manager:
+        return jsonify({'success': False, 'message': 'Referral system not available'})
+    user = referral_manager.find_user_by_referral_code(code)
+    if user:
+        return jsonify({'success': True, 'valid': True, 'username': user.get('username')})
+    else:
+        return jsonify({'success': True, 'valid': False})
+
 @app.route('/api/symbol/change', methods=['POST'])
 @login_required
 def change_symbol():
@@ -1013,12 +902,13 @@ def change_symbol():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
     
+# Add these routes to web_server.py after the existing routes
 @app.route('/api/price/historical')
 @login_required
 def get_historical_prices():
     """Fetch historical price data from Binance"""
     symbol = request.args.get('symbol', 'BTCUSDT')
-    interval = request.args.get('interval', '1h')
+    interval = request.args.get('interval', '1h')  # 1m, 5m, 15m, 1h, 4h, 1d
     limit = request.args.get('limit', 100, type=int)
     
     username = session.get('username')
@@ -1034,7 +924,7 @@ def get_historical_prices():
         client = Client(api_key, api_secret)
         
         # Set testnet if configured
-        user_data = users.get(username, {})
+        user_data = referral_manager.users.get(username, {})
         if user_data.get('use_testnet', True):
             client.API_URL = 'https://testnet.binance.vision/api'
             client.WAPI_URL = 'https://testnet.binance.vision/wapi'
@@ -1068,23 +958,25 @@ def update_user_profile():
     if not data:
         return jsonify({'success': False, 'message': 'No data provided'})
     
-    if username not in users:
+    if not referral_manager or username not in referral_manager.users:
         return jsonify({'success': False, 'message': 'User not found'})
     
-    user_data = users[username]
+    user_data = referral_manager.users[username]
     
     # Update email
     if 'email' in data and data['email']:
+        user_data['email'] = data['email']
+        # Also update in the user's data for the summary
         user_data['email'] = data['email']
     
     # Update password
     if 'password' in data and data['password']:
         user_data['password'] = data['password']
     
-    save_users()
+    referral_manager._save_users()
     
     # Return updated user data
-    summary = get_user_summary(username)
+    summary = referral_manager.get_user_summary(username)
     summary['email'] = user_data.get('email', '')
     
     return jsonify({
@@ -1128,6 +1020,7 @@ def test_api_keys_route():
         return jsonify({'success': False, 'message': f'Error testing API keys: {str(e)}'})
 
 @app.route('/api/user/settings', methods=['PUT'])
+
 @login_required
 def update_user_settings():
     """Update user trading settings"""
@@ -1137,10 +1030,10 @@ def update_user_settings():
     if not data:
         return jsonify({'success': False, 'message': 'No data provided'})
     
-    if username not in users:
+    if not referral_manager or username not in referral_manager.users:
         return jsonify({'success': False, 'message': 'User not found'})
     
-    user_data = users[username]
+    user_data = referral_manager.users[username]
     
     # Initialize settings if not exists
     if 'settings' not in user_data:
@@ -1159,26 +1052,8 @@ def update_user_settings():
     if 'spike_thresholds' in data:
         settings['spike_thresholds'] = data['spike_thresholds']
     
-    save_users()
-    return jsonify({'success': True, 'message': 'Settings saved successfully'})
-
-@app.route('/api/user/delete', methods=['DELETE'])
-@login_required
-def delete_user_account():
-    """Delete user account"""
-    username = session.get('username')
-    
-    if username not in users:
-        return jsonify({'success': False, 'message': 'User not found'})
-    
-    # Delete user
-    del users[username]
-    save_users()
-    
-    # Clear session
-    session.clear()
-    
-    return jsonify({'success': True, 'message': 'Account deleted successfully'})
+    referral_manager._save_users()
+    return jsonify({'success': True, 'message': 'Settings saved successfully'})    
 
 def run_server(port=5000):
     cleanup_stale_pid()
